@@ -8,11 +8,12 @@ import { arrPush, arrPushByPosition, arrUnshift } from '@/utils/common'
 import { LIST_IDS } from '@/constants'
 import { toMD5 } from '@/utils'
 
-export const snapshotInfo = getSnapshotInfo()
+// export const snapshotInfo = getSnapshotInfo()
 export const userLists: LX.List.UserListInfo[] = []
 export const allMusicList = new Map<string, LX.Music.MusicInfo[]>()
 {
   let listData
+  const snapshotInfo = getSnapshotInfo()
   if (snapshotInfo.latest) listData = getSnapshot(snapshotInfo.latest)
   if (!listData) listData = { defaultList: [], loveList: [], userList: [] }
   allMusicList.set(LIST_IDS.DEFAULT, listData.defaultList)
@@ -26,6 +27,7 @@ export const allMusicList = new Map<string, LX.Music.MusicInfo[]>()
 export const createSnapshot = () => {
   const listData = JSON.stringify(getListData())
   const md5 = toMD5(listData)
+  const snapshotInfo = getSnapshotInfo()
   if (snapshotInfo.latest == md5) return md5
   if (snapshotInfo.list.includes(md5)) {
     snapshotInfo.list.splice(snapshotInfo.list.indexOf(md5), 1)
@@ -37,6 +39,7 @@ export const createSnapshot = () => {
   return md5
 }
 export const getCurrentListInfoKey = () => {
+  const snapshotInfo = getSnapshotInfo()
   if (snapshotInfo.latest) {
     return snapshotInfo.latest
   }

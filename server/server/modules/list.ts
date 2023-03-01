@@ -11,7 +11,7 @@ let removeListener: (() => void) | null
 // type listAction = 'list:action'
 
 const handleListAction = async({ action, data }: LX.Sync.ActionList) => {
-  // console.log('handleListAction', action)
+  console.log('handleListAction', action)
   switch (action) {
     case 'list_data_overwrite':
       await global.event_list.list_data_overwrite(data, true)

@@ -68,19 +68,15 @@ interface SnapshotInfo {
   list: string[]
 }
 const snapshotInfoFilePath = path.join(lx.dataPath, 'snapshotInfo.json')
-let snapshotInfo: SnapshotInfo
+let snapshotInfo: SnapshotInfo = fs.existsSync(snapshotInfoFilePath)
+  ? JSON.parse(fs.readFileSync(snapshotInfoFilePath).toString())
+  : { latest: null, time: 0, list: [] }
 const saveSnapshotInfoThrottle = throttle(() => {
   fs.writeFile(snapshotInfoFilePath, JSON.stringify(snapshotInfo), 'utf8', (err) => {
     if (err) console.error(err)
   })
 })
 export const getSnapshotInfo = (): SnapshotInfo => {
-  if (snapshotInfo) return snapshotInfo
-  if (fs.existsSync(snapshotInfoFilePath)) {
-    snapshotInfo = JSON.parse(fs.readFileSync(snapshotInfoFilePath).toString())
-  } else {
-    snapshotInfo = { latest: null, time: 0, list: [] }
-  }
   return snapshotInfo
 }
 export const saveSnapshotInfo = (info: SnapshotInfo) => {

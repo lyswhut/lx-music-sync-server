@@ -264,11 +264,12 @@ const handleSyncList = async(socket: LX.Socket) => {
   if (localListData.defaultList.length || localListData.loveList.length || localListData.userList.length) {
     if (remoteListData.defaultList.length || remoteListData.loveList.length || remoteListData.userList.length) {
       const [mergedList, requiredUpdateLocalListData, requiredUpdateRemoteListData] = await handleMergeListData(socket)
-      console.log('handleMergeListData', 'mergedList')
+      console.log('handleMergeListData', 'mergedList', requiredUpdateLocalListData, requiredUpdateRemoteListData)
       let key
       if (requiredUpdateLocalListData) {
         key = await setLocalList(mergedList)
         await overwriteRemoteListData(mergedList, key, [socket.keyInfo.clientId])
+        if (!requiredUpdateRemoteListData) updateDeviceSnapshotKey(socket.keyInfo, key)
       }
       if (requiredUpdateRemoteListData) {
         if (!key) key = getCurrentListInfoKey()
@@ -278,11 +279,13 @@ const handleSyncList = async(socket: LX.Socket) => {
       await setRemotelList(socket, localListData, getCurrentListInfoKey())
     }
   } else {
+    let key: string
     if (remoteListData.defaultList.length || remoteListData.loveList.length || remoteListData.userList.length) {
-      const key = await setLocalList(remoteListData)
-      updateDeviceSnapshotKey(socket.keyInfo, key)
+      key = await setLocalList(remoteListData)
       await overwriteRemoteListData(remoteListData, key, [socket.keyInfo.clientId])
     }
+    key ??= getCurrentListInfoKey()
+    updateDeviceSnapshotKey(socket.keyInfo, key)
   }
 }
 
@@ -405,6 +408,7 @@ const syncList = async(socket: LX.Socket) => {
   if (socket.keyInfo.snapshotKey) {
     const listData = getSnapshot(socket.keyInfo.snapshotKey)
     if (listData) {
+      console.log('handleMergeListDataFromSnapshot')
       await handleMergeListDataFromSnapshot(socket, listData)
       return
     }
