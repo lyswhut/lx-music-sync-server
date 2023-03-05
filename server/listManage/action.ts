@@ -268,6 +268,8 @@ export const listMusicAdd = async(id: string, musicInfos: LX.Music.MusicInfo[], 
       break
   }
 
+  setMusicList(id, targetList)
+
   return [id]
 }
 
