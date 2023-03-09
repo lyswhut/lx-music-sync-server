@@ -15,7 +15,7 @@ const saveDevicesInfoThrottle = throttle(() => {
     if (err) console.error(err)
   })
 })
-const deviceKeys = Object.values(devicesInfo.clients).map(device => device.key).filter(k => k)
+const deviceKeys = Object.values(devicesInfo.clients).map(device => device.snapshotKey).filter(k => k)
 
 export const saveClientKeyInfo = (keyInfo: LX.Sync.KeyInfo) => {
   if (devicesInfo.clients[keyInfo.clientId] == null && Object.keys(devicesInfo.clients).length > 101) throw new Error('max keys')
