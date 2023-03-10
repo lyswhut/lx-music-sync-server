@@ -40,17 +40,26 @@ npm i -g pm2
 
 ### 安装依赖
 
-在本目录中运行以下命令
+若安装依赖过程中出现因`utf-8-validate`包编译失败的错误，请尝试搜索相关错误解决，若实在无法解决，则可以编辑`package.json`文件删除`dependencies`下的`utf-8-validate`后，重新运行`npm install --omit=dev`或`npm install`即可
+
+
+如果你是在release下载的压缩包，则解压后项目目录执行以下命令安装依赖：
+
+```bash
+npm install --omit=dev
+```
+
+
+如果你是直接下载的源码，则在本目录中运行以下命令
 
 ```bash
 npm install
+npm run build
 ```
 
-如果安装依赖过程中出现因`utf-8-validate`包编译失败的错误，请尝试搜索相关错误解决，若实在无法解决，则可以编辑`package.json`文件删除`dependencies`下的`utf-8-validate`后，重新运行`npm install`即可
+### 配置config.js
 
-### 配置config.ts
-
-按照文件中的说明配置好本目录下的`config.ts`文件
+按照文件中的说明配置好本目录下的`config.js`文件
 
 ### 配置ecosystem.config.js中的env_production
 
@@ -113,6 +122,7 @@ location /xxx { # 该规则用于代理路径下的ws请求
 
 注：上面的`xxx`是你想要代理的路径（可以多级），注意`$remote_addr`的转发名字与config.ts中的`proxy.header`对应，同时启用`proxy.enabled`，这用于校验相同IP多次使用错误连接码连接时的封禁
 
+
 ## 附录
 
 ### 可用的环境变量
@@ -120,7 +130,9 @@ location /xxx { # 该规则用于代理路径下的ws请求
 | 变量名称 | 说明
 |:---:| ---
 | `PORT` | 绑定的端口号，默认`9527`
-| `HOST` | 绑定的IP地址，默认`127.0.0.1`，使用`0.0.0.0`将接受所有IP请求
+| `BIND_IP` | 绑定的IP地址，默认`127.0.0.1`，使用`0.0.0.0`将接受所有IP请求
+| `CONNECT_PWD` | 连接密码，默认使用配置文件内的密码
+| `CONFIG_PATH` | 配置文件路径，默认使用项目目录下的`config.js`
 | `LOG_PATH` | 服务日志保存路径，默认保存在服务目录下的`logs`文件夹内
 | `DATA_PATH` | 同步数据保存路径，默认保存在服务目录下的`data`文件夹内
 
@@ -130,3 +142,11 @@ location /xxx { # 该规则用于代理路径下的ws请求
 - 服务控制台的输出日志：`pm2 logs`
 - 重启服务：`pm2 restart` 服务名称/编号
 - 停止服务：`pm2 stop` 服务名称/编号
+
+### Docker
+
+可以使用以下方式构建docker镜像（Dockerfile用的是源码构建）：
+
+```bash
+docker build -t lx-music-sync-server .
+```

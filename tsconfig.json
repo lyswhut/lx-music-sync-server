@@ -17,12 +17,14 @@
   "compilerOptions": {
     // typescript options here
     "allowJs": true,
-    "outDir": "./dist/",
+    "rootDir": "./src",
+    "outDir": "./server",
     "noImplicitReturns": false,
-    "baseUrl": "./",
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["server/*"],
+      "@/*": ["./*"],
     },
   },
+  "include": ["src"],
   "exclude": ["node_modules"]
 }

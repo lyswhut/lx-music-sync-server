@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node -r ts-node/register -r tsconfig-paths/register ./index.js",
+    "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
+    "start": "node ./index.js",
     "dev": "nodemon",
     "prd": "pm2 start ecosystem.config.js --env production"
   },
@@ -26,18 +27,20 @@
   "homepage": "https://github.com/lyswhut/lx-music-sync-server#readme",
   "dependencies": {
     "bufferutil": "^4.0.7",
-    "chalk": "^4.1.2",
-    "log4js": "^6.8.0",
-    "lru-cache": "^7.18.1",
+    "log4js": "^6.9.1",
+    "lru-cache": "^7.18.3",
     "utf-8-validate": "^6.0.3",
     "ws": "^8.12.1"
   },
   "devDependencies": {
     "@tsconfig/node18": "^1.0.1",
     "@types/ws": "^8.5.4",
+    "chalk": "^4.1.2",
+    "changelog-parser": "^3.0.1",
     "eslint-config-standard-with-typescript": "^34.0.0",
-    "nodemon": "^2.0.20",
+    "nodemon": "^2.0.21",
     "ts-node": "^10.9.1",
+    "tsc-alias": "^1.8.3",
     "tsconfig-paths": "^4.1.2",
     "typescript": "^4.9.5"
   },

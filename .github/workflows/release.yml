@@ -1,0 +1,69 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  Linux:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out git repository
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Cache file
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            $HOME/.npm/_prebuilds
+          key: ${{ runner.os }}-build-caches-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
+      - name: Install Dependencies
+        run: |
+          npm install
+
+      - name: Build src code
+        run: npm run build
+
+      - name: Get package info
+        run: |
+          node -p -e '`PACKAGE_NAME=${require("./package.json").name}`' >> $GITHUB_ENV
+          node -p -e '`PACKAGE_VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
+
+      - name: Create git tag
+        uses: pkgdeps/git-tag-action@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_repo: ${{ github.repository }}
+          version: ${{ env.PACKAGE_VERSION }}
+          git_commit_sha: ${{ github.sha }}
+          git_tag_prefix: "v"
+
+      - name: Zip files
+        run: zip -r lx-music-sync-server_v${{ env.PACKAGE_VERSION }}.zip server ecosystem.config.js config.js index.js package-lock.json package.json LICENSE Readme.md
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: ./publish/changeLog.md
+          prerelease: false
+          draft: false
+          tag_name: v${{ env.PACKAGE_VERSION }}
+          files: |
+            lx-music-sync-server_v${{ env.PACKAGE_VERSION }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate file MD5
+        run: |
+          md5sum *.zip
