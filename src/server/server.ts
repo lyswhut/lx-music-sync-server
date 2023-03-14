@@ -1,12 +1,22 @@
-import http, { type IncomingMessage } from 'node:http'
+import http, {type IncomingMessage} from 'node:http'
 import url from 'node:url'
-import { WebSocketServer } from 'ws'
+import {WebSocketServer} from 'ws'
 import * as modules from './modules'
-import { authCode, authConnect } from './auth'
-import { getAddress, getServerId, getClientKeyInfo, saveClientKeyInfo, sendStatus, decryptMsg, encryptMsg } from '@/utils/tools'
+import {authCode, authConnect} from './auth'
+import {
+  getAddress,
+  getServerId,
+  getClientKeyInfo,
+  saveClientKeyInfo,
+  sendStatus,
+  decryptMsg,
+  encryptMsg
+} from '@/utils/tools'
 import syncList from './syncList'
-import { accessLog, startupLog, syncLog } from '@/utils/log4js'
-import { SYNC_CLOSE_CODE, SYNC_CODE } from '@/constants'
+import {accessLog, startupLog, syncLog} from '@/utils/log4js'
+import {SYNC_CLOSE_CODE, SYNC_CODE} from '@/constants'
+import querystring from "node:querystring";
+import {getUserName} from "@/utils/data";
 
 
 let status: LX.Sync.Status = {
@@ -36,9 +46,18 @@ let status: LX.Sync.Status = {
 //   },
 // }
 
-const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
+const handleConnection = async (socket: LX.Socket, request: IncomingMessage) => {
   const queryData = url.parse(request.url as string, true).query as Record<string, string>
-
+  const clientId = queryData.i
+  if (!clientId) {
+    socket.close(SYNC_CLOSE_CODE.failed)
+    return
+  }
+  const userName = getUserName(clientId.toString())
+  if (!userName) {
+    socket.close(SYNC_CLOSE_CODE.failed)
+    return
+  }
   socket.onClose(() => {
     // console.log('disconnect', reason)
     status.devices.splice(status.devices.findIndex(k => k.clientId == keyInfo?.clientId), 1)
@@ -47,17 +66,18 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
 
 
   //   // if (typeof socket.handshake.query.i != 'string') return socket.disconnect(true)
-  const keyInfo = getClientKeyInfo(queryData.i)
+
+  const keyInfo = getClientKeyInfo(userName, clientId)
   if (!keyInfo) {
     socket.close(SYNC_CLOSE_CODE.failed)
     return
   }
   keyInfo.lastSyncDate = Date.now()
-  saveClientKeyInfo(keyInfo)
+  saveClientKeyInfo(userName, keyInfo)
   //   // socket.lx_keyInfo = keyInfo
   socket.keyInfo = keyInfo
   try {
-    await syncList(wss as LX.SocketServer, socket)
+    await syncList(userName, wss as LX.SocketServer, socket)
   } catch (err) {
     // console.log(err)
     syncLog.warn(err)
@@ -71,7 +91,7 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
   accessLog.info('connection', keyInfo.deviceName)
   // console.log(socket.handshake.query)
   for (const module of Object.values(modules)) {
-    module.registerListHandler(wss as LX.SocketServer, socket)
+    module.registerListHandler(userName, wss as LX.SocketServer, socket)
   }
 
   socket.isReady = true
@@ -98,12 +118,14 @@ const authConnection = (req: http.IncomingMessage, callback: (err: string | null
 
 let wss: LX.SocketServer | null
 
-function noop() {}
+function noop() {
+}
+
 function onSocketError(err: Error) {
   console.error(err)
 }
 
-const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Promise((resolve, reject) => {
+const handleStartServer = async (port = 9527, ip = '127.0.0.1') => await new Promise((resolve, reject) => {
   const httpServer = http.createServer((req, res) => {
     // console.log(req.url)
     const endUrl = `/${req.url?.split('/').at(-1) ?? ''}`
@@ -119,7 +141,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
         msg = SYNC_CODE.idPrefix + getServerId()
         break
       case '/ah':
-        void authCode(req, res, global.lx.config.connectPasword)
+        void authCode(req, res)
         break
       default:
         code = 401
@@ -135,7 +157,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
     noServer: true,
   })
 
-  wss.on('connection', function(socket, request) {
+  wss.on('connection', function (socket, request) {
     socket.isReady = false
     socket.on('pong', () => {
       socket.isAlive = true
@@ -145,7 +167,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
     // const events = new Map<keyof LX.Sync.ActionSyncType, Array<(err: Error | null, data: LX.Sync.ActionSyncType[keyof LX.Sync.ActionSyncType]) => void>>()
     let events: Partial<{ [K in keyof LX.Sync.ActionSyncType]: Array<(data: LX.Sync.ActionSyncType[K]) => void> }> = {}
     let closeEvents: Array<(err: Error) => (void | Promise<void>)> = []
-    socket.addEventListener('message', ({ data }) => {
+    socket.addEventListener('message', ({data}) => {
       if (typeof data === 'string') {
         let syncData: LX.Sync.ActionSync
         try {
@@ -170,7 +192,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
       closeEvents = []
       if (!status.devices.length) handleUnconnection()
     })
-    socket.onRemoteEvent = function(eventName, handler) {
+    socket.onRemoteEvent = function (eventName, handler) {
       let eventArr = events[eventName]
       if (!eventArr) events[eventName] = eventArr = []
       // let eventArr = events.get(eventName)
@@ -181,14 +203,14 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
         eventArr!.splice(eventArr!.indexOf(handler), 1)
       }
     }
-    socket.onClose = function(handler: typeof closeEvents[number]) {
+    socket.onClose = function (handler: typeof closeEvents[number]) {
       closeEvents.push(handler)
       return () => {
         closeEvents.splice(closeEvents.indexOf(handler), 1)
       }
     }
-    socket.sendData = function(eventName, data, callback) {
-      socket.send(encryptMsg(socket.keyInfo, JSON.stringify({ action: eventName, data })), callback)
+    socket.sendData = function (eventName, data, callback) {
+      socket.send(encryptMsg(socket.keyInfo, JSON.stringify({action: eventName, data})), callback)
     }
 
     void handleConnection(socket, request)
@@ -279,7 +301,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
 //   })
 // }
 
-export const startServer = async(port: number, ip: string) => {
+export const startServer = async (port: number, ip: string) => {
   // if (status.status) await handleStopServer()
 
   startupLog.info(`starting sync server in ${process.env.NODE_ENV == 'production' ? 'production' : 'development'}`)

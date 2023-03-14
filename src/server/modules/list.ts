@@ -10,7 +10,7 @@ let removeListener: (() => void) | null
 
 // type listAction = 'list:action'
 
-const handleListAction = async({ action, data }: LX.Sync.ActionList) => {
+const handleListAction = async(userName: string, { action, data }: LX.Sync.ActionList) => {
   console.log('handleListAction', action)
   switch (action) {
     case 'list_data_overwrite':
@@ -52,7 +52,7 @@ const handleListAction = async({ action, data }: LX.Sync.ActionList) => {
     default:
       return null
   }
-  let key = createSnapshot()
+  let key = createSnapshot(userName)
   return key
 }
 
@@ -137,7 +137,7 @@ const handleListAction = async({ action, data }: LX.Sync.ActionList) => {
 //   // ...
 // }
 
-const broadcast = async(key: string, data: any, excludeIds: string[] = []) => {
+const broadcast = async(userName: string, key: string, data: any, excludeIds: string[] = []) => {
   if (!wss) return
   const dataStr = JSON.stringify({ action: 'list:sync:action', data })
   for (const socket of wss.clients) {
@@ -147,7 +147,7 @@ const broadcast = async(key: string, data: any, excludeIds: string[] = []) => {
         socket.close(SYNC_CLOSE_CODE.failed)
         return
       }
-      updateDeviceSnapshotKey(socket.keyInfo, key)
+      updateDeviceSnapshotKey(userName,socket.keyInfo, key)
     })
   }
 }
@@ -158,7 +158,7 @@ const broadcast = async(key: string, data: any, excludeIds: string[] = []) => {
 //   await broadcast('list:sync:action', action)
 // }
 
-export const registerListHandler = (_wss: LX.SocketServer, socket: LX.Socket) => {
+export const registerListHandler = (userName: string, _wss: LX.SocketServer, socket: LX.Socket) => {
   if (!wss) {
     wss = _wss
     // removeListener = registerListActionEvent()
@@ -167,10 +167,10 @@ export const registerListHandler = (_wss: LX.SocketServer, socket: LX.Socket) =>
   socket.onRemoteEvent('list:sync:action', (action) => {
     if (!socket.isReady) return
     // console.log(msg)
-    void handleListAction(action).then(key => {
+    void handleListAction(userName,action).then(key => {
       if (!key) return
-      updateDeviceSnapshotKey(socket.keyInfo, key)
-      void broadcast(key, action, [socket.keyInfo.clientId])
+      updateDeviceSnapshotKey(userName,socket.keyInfo, key)
+      void broadcast(userName,key, action, [socket.keyInfo.clientId])
     })
     // socket.broadcast.emit('list:action', { action: 'list_remove', data: { id: 'default', index: 0 } })
   })
