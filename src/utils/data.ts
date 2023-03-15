@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {randomBytes} from 'node:crypto'
 import {syncLog} from './log4js'
+import {isItInTheArray} from "@/index";
 
 interface DevicesInfo {
   serverId: string
@@ -11,25 +12,34 @@ interface DevicesInfo {
 
 const dataPath = global.lx.dataPath
 const devicesFilePath = path.join(dataPath, 'devices.json')
-const getDevicesInfos = () => {
-  let devicesInfo: DevicesInfo
-  if (fs.existsSync(devicesFilePath)) {
-    devicesInfo = JSON.parse(fs.readFileSync(devicesFilePath).toString())
-  } else {
-    devicesInfo = {serverId: '', userNames: {}}
-    for (const userName of Object.keys(global.lx.configs)) {
-      devicesInfo.userNames[userName] = {clients: {}}
-    }
-  }
-  return devicesInfo
-}
-const devicesInfo: DevicesInfo = getDevicesInfos()
 
 const saveDevicesInfoThrottle = throttle(() => {
   fs.writeFile(devicesFilePath, JSON.stringify(devicesInfo), 'utf8', (err) => {
     if (err) console.error(err)
   })
 })
+
+const getDevicesInfos = () => {
+  let devicesInfo: DevicesInfo = {serverId: '', userNames: {}}
+  const userNames = Object.keys(global.lx.users)
+  for (const userName of Object.keys(global.lx.users)) {
+    devicesInfo.userNames[userName] = {clients: {}}
+  }
+  if (fs.existsSync(devicesFilePath)) {
+    const localDevicesInfo = JSON.parse(fs.readFileSync(devicesFilePath).toString())
+    devicesInfo.serverId = localDevicesInfo.serverId
+    for (const userName of Object.keys(localDevicesInfo.userNames)) {
+      if (isItInTheArray(userName, userNames) || !global.lx.clearDeleteUserData) {
+        console.log('加载本地【', userName, '】信息')
+        devicesInfo.userNames[userName] = localDevicesInfo.userNames[userName]
+      }
+    }
+  }
+  return devicesInfo
+}
+const devicesInfo: DevicesInfo = getDevicesInfos()
+
+saveDevicesInfoThrottle()
 
 export const getDeviceKeys = (userName: string) => {
   return Object.values(devicesInfo.userNames[userName].clients).map(device => device.snapshotKey).filter(k => k)
@@ -41,19 +51,22 @@ export const saveClientKeyInfo = (userName: string, keyInfo: LX.Sync.KeyInfo) =>
   clients[keyInfo.clientId] = keyInfo
   saveDevicesInfoThrottle()
 }
-export const getUserName = (clientId?: string) => {
+
+export const getUserName = (clientId?: string): string | null => {
   if (!clientId) return null
   for (const userName of Object.keys(devicesInfo.userNames)) {
-    if (Object.keys(devicesInfo.userNames[userName].clients).indexOf(clientId) > -1) {
-      return userName
+    if (isItInTheArray(clientId, Object.keys(devicesInfo.userNames[userName].clients))) {
+      return userName.toString()
     }
   }
+  return null
 }
 
 export const getClientKeyInfo = (userName: string, clientId?: string): LX.Sync.KeyInfo | null => {
   if (!clientId) return null
   return devicesInfo.userNames[userName].clients[clientId]
 }
+
 export const getServerId = (): string => {
   if (!devicesInfo.serverId) devicesInfo.serverId = randomBytes(4 * 4).toString('base64')
   saveDevicesInfoThrottle()
@@ -66,12 +79,12 @@ export const isIncluedsDevice = (userName: string, name: string) => {
 }
 
 export const clearOldSnapshot = (userName: string) => {
-  const snapshotInfo = snapshotInfos.get(userName)
+  const snapshotInfo = snapshotInfos[userName]
   if (!snapshotInfo) return
   const snapshotList = snapshotInfo.list.filter(name => !isIncluedsDevice(userName, name))
   // console.log(snapshotList.length, lx.config.maxSsnapshotNum)
-  let requiredSave = snapshotList.length > lx.configs[userName].maxSsnapshotNum
-  while (snapshotList.length > lx.configs[userName].maxSsnapshotNum) {
+  let requiredSave = snapshotList.length > global.lx.users[userName].maxSsnapshotNum
+  while (snapshotList.length > global.lx.users[userName].maxSsnapshotNum) {
     const name = snapshotList.pop()
     if (name) {
       removeSnapshot(userName, name)
@@ -80,6 +93,7 @@ export const clearOldSnapshot = (userName: string) => {
   }
   if (requiredSave) saveSnapshotInfo(userName, snapshotInfo)
 }
+
 export const updateDeviceSnapshotKey = (userName: string, keyInfo: LX.Sync.KeyInfo, key: string) => {
   // console.log('updateDeviceSnapshotKey', key)
   const deviceKeys = getDeviceKeys(userName)
@@ -94,35 +108,32 @@ export const updateDeviceSnapshotKey = (userName: string, keyInfo: LX.Sync.KeyIn
   }
 }
 
-
 interface SnapshotInfo {
   latest: string | null
   time: number
   list: string[]
 }
 
-let snapshotInfos = new Map<string, SnapshotInfo>()
+const snapshotInfos: Record<string, SnapshotInfo> = {}
 
-for (const userName of Object.keys(global.lx.configs)) {
+for (const userName of Object.keys(global.lx.users)) {
   const snapshotInfoFilePath = path.join(lx.dataPath, userName, 'snapshotInfo.json')
-  snapshotInfos.set(userName, fs.existsSync(snapshotInfoFilePath)
-    ? JSON.parse(fs.readFileSync(snapshotInfoFilePath).toString())
-    : {latest: null, time: 0, list: []})
+  snapshotInfos[userName] = fs.existsSync(snapshotInfoFilePath) ? JSON.parse(fs.readFileSync(snapshotInfoFilePath).toString())
+    : {latest: null, time: 0, list: []}
 }
 
 const saveSnapshotInfoThrottle = throttle((userName: string) => {
-  fs.writeFile(path.join(dataPath, userName, 'snapshotInfo.json'), JSON.stringify(snapshotInfos.get(userName)), 'utf8', (err) => {
+  fs.writeFile(path.join(dataPath, userName, 'snapshotInfo.json'), JSON.stringify(snapshotInfos[userName]), 'utf8', (err) => {
     if (err) console.error(err)
   })
 })
 
 export const getSnapshotInfo = (userName: string): SnapshotInfo => {
-  // @ts-ignore
-  return snapshotInfos.get(userName)
+  return snapshotInfos[userName]
 }
 
 export const saveSnapshotInfo = (userName: string, info: SnapshotInfo) => {
-  snapshotInfos.set(userName, info)
+  snapshotInfos[userName] = info
   saveSnapshotInfoThrottle(userName)
 }
 
@@ -137,6 +148,7 @@ export const getSnapshot = (userName: string, name: string) => {
   }
   return listData
 }
+
 export const saveSnapshot = (userName: string, name: string, data: string) => {
   syncLog.info('saveSnapshot', name)
   const filePath = path.join(lx.dataPath, userName, `snapshot_${name}`)
@@ -147,6 +159,7 @@ export const saveSnapshot = (userName: string, name: string, data: string) => {
     throw err
   }
 }
+
 export const removeSnapshot = (userName: string, name: string) => {
   syncLog.info('removeSnapshot', name)
   const filePath = path.join(lx.dataPath, userName, `snapshot_${name}`)

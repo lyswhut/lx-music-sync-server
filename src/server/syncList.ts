@@ -76,7 +76,7 @@ const finishedSync = async (socket: LX.Socket) => new Promise<void>((resolve, re
 
 
 const setLocalList = async (userName: string, listData: LX.Sync.ListData) => {
-  await global.event_list.list_data_overwrite(listData, true)
+  await global.event_list.list_data_overwrite(userName, listData, true)
   return createSnapshot(userName)
 }
 const sendDataPromise = async (userName: string, socket: LX.Socket, dataStr: string, key: string) => new Promise<void>((resolve, reject) => {
@@ -159,7 +159,7 @@ const handleMergeList = (
   return ids.map(id => map.get(id)) as LX.Music.MusicInfo[]
 }
 const mergeList = (userName: string, sourceListData: LX.Sync.ListData, targetListData: LX.Sync.ListData): LX.Sync.ListData => {
-  const addMusicLocationType = global.lx.configs[userName]['list.addMusicLocationType']
+  const addMusicLocationType = global.lx.users[userName]['list.addMusicLocationType']
   const newListData: LX.Sync.ListData = {
     defaultList: [],
     loveList: [],
@@ -214,13 +214,11 @@ const overwriteList = (sourceListData: LX.Sync.ListData, targetListData: LX.Sync
       newListData.userList.push(list)
     }
   })
-
   return newListData
 }
 
 const handleMergeListData = async (userName: string, socket: LX.Socket): Promise<[LX.Sync.ListData, boolean, boolean]> => {
   const mode: LX.Sync.Mode = await getSyncMode(socket)
-
   if (mode == 'cancel') {
     socket.close(SYNC_CLOSE_CODE.normal)
     throw new Error('cancel')
@@ -345,7 +343,7 @@ const checkListLatest = async (userName: string, socket: LX.Socket) => {
 const handleMergeListDataFromSnapshot = async (userName: string, socket: LX.Socket, snapshot: LX.Sync.ListData) => {
   if (await checkListLatest(userName, socket)) return
 
-  const addMusicLocationType = global.lx.configs[userName]['list.addMusicLocationType']
+  const addMusicLocationType = global.lx.users[userName]['list.addMusicLocationType']
   const [remoteListData, localListData] = await Promise.all([getRemoteListData(socket), getLocalListData(userName)])
   const newListData: LX.Sync.ListData = {
     defaultList: [],
@@ -444,7 +442,7 @@ export default async (userName: string, _wss: LX.SocketServer, socket: LX.Socket
   }
 
   syncingId = socket.keyInfo.clientId
-  await syncList(userName, socket).then(async () => {
+  await syncList(userName!, socket).then(async () => {
     return finishedSync(socket)
   }).finally(() => {
     syncingId = null

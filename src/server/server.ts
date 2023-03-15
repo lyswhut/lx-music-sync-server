@@ -15,7 +15,6 @@ import {
 import syncList from './syncList'
 import {accessLog, startupLog, syncLog} from '@/utils/log4js'
 import {SYNC_CLOSE_CODE, SYNC_CODE} from '@/constants'
-import querystring from "node:querystring";
 import {getUserName} from "@/utils/data";
 
 
@@ -53,17 +52,18 @@ const handleConnection = async (socket: LX.Socket, request: IncomingMessage) => 
     socket.close(SYNC_CLOSE_CODE.failed)
     return
   }
+
   const userName = getUserName(clientId.toString())
   if (!userName) {
     socket.close(SYNC_CLOSE_CODE.failed)
     return
   }
+
   socket.onClose(() => {
     // console.log('disconnect', reason)
     status.devices.splice(status.devices.findIndex(k => k.clientId == keyInfo?.clientId), 1)
     sendStatus(status)
   })
-
 
   //   // if (typeof socket.handshake.query.i != 'string') return socket.disconnect(true)
 
@@ -72,17 +72,20 @@ const handleConnection = async (socket: LX.Socket, request: IncomingMessage) => 
     socket.close(SYNC_CLOSE_CODE.failed)
     return
   }
+
   keyInfo.lastSyncDate = Date.now()
   saveClientKeyInfo(userName, keyInfo)
   //   // socket.lx_keyInfo = keyInfo
+
   socket.keyInfo = keyInfo
   try {
-    await syncList(userName, wss as LX.SocketServer, socket)
+    await syncList(userName,wss as LX.SocketServer, socket)
   } catch (err) {
     // console.log(err)
     syncLog.warn(err)
     return
   }
+
   status.devices.push(keyInfo)
   // handleConnection(io, socket)
   sendStatus(status)

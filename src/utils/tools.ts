@@ -96,7 +96,6 @@ export const createClientKeyInfo = (userName: string, deviceName: string, isMobi
   return keyInfo
 }
 
-
 export {
   getServerId,
   getClientKeyInfo,

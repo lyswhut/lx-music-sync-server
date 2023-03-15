@@ -13,6 +13,7 @@ export const SYNC_CODE = {
   msgAuthFailed: 'Auth failed',
   msgBlockedIp: 'Blocked IP',
   msgConnect: 'lx-music connect',
+  msgAccount:'Account deactivated'
 } as const
 
 export const SYNC_CLOSE_CODE = {

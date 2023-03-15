@@ -4,6 +4,11 @@ declare namespace LX {
 
   interface Config {
     /**
+     * 账号是否启用
+     */
+    state: boolean,
+
+    /**
      * 同步服务名称
      */
     'userName': string

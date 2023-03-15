@@ -1,8 +1,9 @@
-import { LIST_IDS } from '@/constants'
+import {LIST_IDS} from '@/constants'
 
-export const allMusicList = new Map<string, LX.Music.MusicInfo[]>()
+export const allMusicLists: Record<string, Map<string, LX.Music.MusicInfo[]>> = {}
+export const userListss: Record<string, LX.List.UserListInfo[]> = {}
 
-export const defaultList: LX.List.MyDefaultListInfo = {
+export const defaultLists: LX.List.MyDefaultListInfo = {
   id: LIST_IDS.DEFAULT,
   name: '试听列表',
 }
@@ -17,4 +18,3 @@ export const tempList: LX.List.MyTempListInfo = {
   meta: {},
 }
 
-export const userLists: LX.List.UserListInfo[] = []

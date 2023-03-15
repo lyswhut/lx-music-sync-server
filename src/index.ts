@@ -27,6 +27,16 @@ const exit = (message: string): never => {
   process.exit(0)
 }
 
+export const isEmpty = (o: any) => {
+  if (o === null) return true
+  if (o === undefined) return true
+  return o === '';
+}
+
+export const isItInTheArray = (key: string, array: Array<string>) => {
+  return array.indexOf(key) > -1
+}
+
 const margeConfig = (p: string) => {
   let configs: Record<string, LX.Config>
   try {
@@ -39,26 +49,30 @@ const margeConfig = (p: string) => {
   const passwords = Object.values(configs).map(c => c.connectPasword)
 
   for (const userName of Object.keys(configs)) {
-    if (!configs[userName].userName) {
-      configs[userName].userName = userName
+    const config = configs[userName]
+    if (!config.hasOwnProperty('state')) {
+      config.state = defaultConfig.users.mySyncServer.status
+    }
+    if (!config.hasOwnProperty('userName') || isEmpty(config.userName)) {
+      config.userName = userName
     }
     if (userNames.filter(un => un === userName).length > 1) {
       exit('The userName is duplicate, please modify the configuration file')
     }
-    if (!configs[userName].connectPasword) {
+    if (!config.hasOwnProperty('connectPasword') || isEmpty(config.connectPasword)) {
       exit('User ' + userName + ' has not set a password, please modify the configuration file')
     }
-    if (passwords.filter(pw => pw === configs[userName].connectPasword).length > 1) {
+    if (passwords.filter(pw => pw === config.connectPasword).length > 1) {
       exit('The password is duplicate, please modify the configuration file')
     }
-    if (!configs[userName].maxSsnapshotNum) {
-      configs[userName].maxSsnapshotNum = defaultConfig.configs.mySyncServer.maxSsnapshotNum
+    if (!config.hasOwnProperty('maxSsnapshotNum') || isEmpty(config.maxSsnapshotNum)) {
+      config.maxSsnapshotNum = defaultConfig.users.mySyncServer.maxSsnapshotNum
     }
-    if (!configs[userName]['list.addMusicLocationType']) {
-      configs[userName]['list.addMusicLocationType'] = defaultConfig.configs.mySyncServer["list.addMusicLocationType"]
+    if (!config.hasOwnProperty('list.addMusicLocationType') || isEmpty(config['list.addMusicLocationType'])) {
+      config['list.addMusicLocationType'] = defaultConfig.users.mySyncServer["list.addMusicLocationType"]
     }
   }
-  global.lx.configs = configs
+  global.lx.users = configs
   console.log('Load config: ' + p)
   return true
 }
@@ -71,7 +85,8 @@ global.lx = {
   serverName: process.env.SERVER_NAME ?? defaultConfig.serverName,
   'proxy.enabled': Boolean(process.env.PROXY_ENABLED ?? defaultConfig["proxy.enabled"]),
   'proxy.header': process.env.PROXY_HEADER ?? defaultConfig["proxy.header"],
-  configs: defaultConfig.configs
+  clearDeleteUserData: Boolean(process.env.CLEAR_DELETE_USER_DATA ?? defaultConfig.clearDeleteUserData),
+  users: defaultConfig.users
 }
 
 const configPath = path.join(__dirname, '../config.js')
@@ -90,12 +105,43 @@ export const checkAndCreateDirSync = (path: string) => {
   }
 }
 
+function deleteFolder(path: string) {
+  let files = [];
+  if (fs.existsSync(path)) {
+    files = fs.readdirSync(path);
+    files.forEach(function (file, index) {
+      const curPath = path + "/" + file;
+      if (fs.statSync(curPath).isDirectory()) { // recurse
+        deleteFolder(curPath);
+      } else { // delete file
+        fs.unlinkSync(curPath);
+      }
+    });
+    fs.rmdirSync(path);
+  }
+}
 
-for (const userName in global.lx.configs) {
-  checkAndCreateDirSync(path.join(global.lx.logPath, userName))
-  checkAndCreateDirSync(path.join(global.lx.dataPath, userName))
+checkAndCreateDirSync(global.lx.logPath)
+
+for (const userName in global.lx.users) {
   checkAndCreateDirSync(path.join(global.lx.dataPath, userName, "snapshot"))
 }
+
+if (global.lx.clearDeleteUserData) {
+  const userNames = Object.keys(global.lx.users)
+  fs.readdir(global.lx.dataPath, (err, files) => {
+    for (const file of files) {
+      const tempPath = path.join(global.lx.dataPath, file)
+      fs.stat(tempPath, (err, stat) => {
+        if (stat.isDirectory() && !isItInTheArray(file, userNames)) {
+          console.log('删除', tempPath, '目录')
+          deleteFolder(tempPath)
+        }
+      })
+    }
+  })
+}
+
 
 initLogger()
 

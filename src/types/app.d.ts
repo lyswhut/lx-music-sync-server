@@ -34,9 +34,13 @@ declare global {
      */
     'proxy.header': string
     /**
+     * 删除用户配置，是否同时删除用户信息
+     */
+    clearDeleteUserData: boolean
+    /**
      * 用户配置文件
      */
-    configs: Record<string, Lx.Config>
+    users: Record<string, Lx.Config>
   }
 
   // var envParams: LX.EnvParams

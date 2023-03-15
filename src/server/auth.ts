@@ -22,7 +22,7 @@ export const authCode = async (req: http.IncomingMessage, res: http.ServerRespon
   if (typeof req.headers.m == 'string') {
     if (ip && (store.get<number>(ip) ?? 0) < 10) {
       if (req.headers.m) {
-        for (const userName of Object.keys(global.lx.configs)) {
+        for (const userName of Object.keys(global.lx.users)) {
           label:
             if (req.headers.i) { // key验证
               if (typeof req.headers.i != 'string') break label
@@ -36,6 +36,10 @@ export const authCode = async (req: http.IncomingMessage, res: http.ServerRespon
               }
               // console.log(text)
               if (text.startsWith(SYNC_CODE.authMsg)) {
+                if (!global.lx.users[userName].state) {
+                  msg = userName + SYNC_CODE.msgConnect
+                  break
+                }
                 code = 200
                 const deviceName = text.replace(SYNC_CODE.authMsg, '') || 'Unknown'
                 if (deviceName != keyInfo.deviceName) {
@@ -46,7 +50,7 @@ export const authCode = async (req: http.IncomingMessage, res: http.ServerRespon
                 break
               }
             } else { // 连接码验证
-              let key = ''.padStart(16, Buffer.from(global.lx.configs[userName].connectPasword).toString('hex'))
+              let key = ''.padStart(16, Buffer.from(global.lx.users[userName].connectPasword).toString('hex'))
               // const iv = Buffer.from(key.split('').reverse().join('')).toString('base64')
               key = Buffer.from(key).toString('base64')
               // console.log(req.headers.m, authCode, key)
@@ -58,6 +62,10 @@ export const authCode = async (req: http.IncomingMessage, res: http.ServerRespon
               }
               // console.log(text)
               if (text.startsWith(SYNC_CODE.authMsg)) {
+                if (!global.lx.users[userName].state) {
+                  msg = userName + SYNC_CODE.msgConnect
+                  break
+                }
                 code = 200
                 const data = text.split('\n')
                 const publicKey = `-----BEGIN PUBLIC KEY-----\n${data[1]}\n-----END PUBLIC KEY-----`
@@ -67,7 +75,7 @@ export const authCode = async (req: http.IncomingMessage, res: http.ServerRespon
                 msg = rsaEncrypt(Buffer.from(JSON.stringify({
                   clientId: keyInfo.clientId,
                   key: keyInfo.key,
-                  serverName: global.lx.serverName + ' 【' + userName.toString() + '】',
+                  serverName: global.lx.serverName + ' 【' + userName + '】',
                 })), publicKey)
                 break
               }
@@ -96,7 +104,7 @@ export const authConnect = async (req: http.IncomingMessage) => {
   label:
     if (typeof i == 'string' && typeof t == 'string') {
       const userName = getUserName(i.toString())
-      if (!userName) break label
+      if (!userName || !global.lx.users[userName]) break label
       const keyInfo = getClientKeyInfo(userName, i)
       if (!keyInfo) break label
       let text
