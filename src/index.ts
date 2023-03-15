@@ -81,6 +81,34 @@ const margeConfig = (configPath: string) => {
   return true
 }
 
+export const checkAndCreateDirSync = (path: string) => {
+  if (!fs.existsSync(path)) {
+    try {
+      fs.mkdirSync(path, {recursive: true})
+    } catch (e: any) {
+      if (e.code !== 'EEXIST') {
+        exit(`Could not set up log directory, error was: ${e.message as string}`)
+      }
+    }
+  }
+}
+
+const deleteFolder = (path: string) => {
+  let files = [];
+  if (fs.existsSync(path)) {
+    files = fs.readdirSync(path);
+    for (const file of files) {
+      const curPath = path + "/" + file;
+      if (fs.statSync(curPath).isDirectory()) { // recurse
+        deleteFolder(curPath);
+      } else { // delete file
+        fs.unlinkSync(curPath);
+      }
+    }
+    fs.rmdirSync(path);
+  }
+}
+
 global.lx = {
   port: normalizePort(process.env.PORT ?? defaultConfig.port + ''),
   bindIP: process.env.HOST ?? defaultConfig.bindIP,
@@ -92,14 +120,15 @@ global.lx = {
   clearDeleteUserData: Boolean(process.env.CLEAR_DELETE_USER_DATA ?? defaultConfig.clearDeleteUserData),
   users: {}
 }
-
-process.env.CONFIG_PATH = path.join(__dirname, '../data/config.js')
 let configPath = path.join(__dirname, '../config.js')
-if (process.env.CONFIG_PATH) {
-  if (!fs.existsSync(process.env.CONFIG_PATH))
-    fs.copyFileSync(configPath, process.env.CONFIG_PATH)
+const pec = process.env.CONFIG_PATH
+if (pec) {
+  if (!fs.existsSync(pec)) {
+    checkAndCreateDirSync(pec.substring(0, pec.lastIndexOf('\\')))
+    fs.copyFileSync(configPath, pec)
+  }
   console.log('create【' + process.env.CONFIG_PATH + '】profile')
-  configPath = process.env.CONFIG_PATH
+  configPath = pec
 }
 
 if (!margeConfig(configPath)) {
@@ -114,34 +143,6 @@ if (!margeConfig(configPath)) {
   }
   if (isEmpty(defaultConfig.users.mySyncServer.connectPasword)) {
     exit('The default user has not set the password. Please modify the configuration file defaultConfig.js or set the environment variable CONNECT_ PWD')
-  }
-}
-
-export const checkAndCreateDirSync = (path: string) => {
-  if (!fs.existsSync(path)) {
-    try {
-      fs.mkdirSync(path, {recursive: true})
-    } catch (e: any) {
-      if (e.code !== 'EEXIST') {
-        exit(`Could not set up log directory, error was: ${e.message as string}`)
-      }
-    }
-  }
-}
-
-function deleteFolder(path: string) {
-  let files = [];
-  if (fs.existsSync(path)) {
-    files = fs.readdirSync(path);
-    for (const file of files) {
-      const curPath = path + "/" + file;
-      if (fs.statSync(curPath).isDirectory()) { // recurse
-        deleteFolder(curPath);
-      } else { // delete file
-        fs.unlinkSync(curPath);
-      }
-    }
-    fs.rmdirSync(path);
   }
 }
 
