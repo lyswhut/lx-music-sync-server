@@ -10,8 +10,7 @@ FROM node:16-alpine AS final
 WORKDIR /server
 EXPOSE 9527
 ENV PORT 9527
-ENV BIND_IP '127.0.0.1'
-ENV CONNECT_PWD ''
+ENV BIND_IP '0.0.0.0'
 ENV CONFIG_PATH '/server/config.js'
 ENV LOG_PATH '/server/logs'
 ENV DATA_PATH '/server/data'
