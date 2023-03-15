@@ -4,7 +4,8 @@
 
 本项目需要有一些服务器操作经验的人使用，若遇到问题欢迎反馈。
 
-**由于服务本身不提供https协议支持，若将服务部署在公网，请务必使用Nginx之类的服务做反向代理，实现客户端到服务器之间的https连接。**
+**
+由于服务本身不提供https协议支持，若将服务部署在公网，请务必使用Nginx之类的服务做反向代理，实现客户端到服务器之间的https连接。**
 
 ## 环境要求
 
@@ -40,15 +41,14 @@ npm i -g pm2
 
 ### 安装依赖
 
-若安装依赖过程中出现因`utf-8-validate`包编译失败的错误，请尝试搜索相关错误解决，若实在无法解决，则可以编辑`package.json`文件删除`dependencies`下的`utf-8-validate`后，重新运行`npm install --omit=dev`或`npm install`即可
-
+若安装依赖过程中出现因`utf-8-validate`包编译失败的错误，请尝试搜索相关错误解决，若实在无法解决，则可以编辑`package.json`
+文件删除`dependencies`下的`utf-8-validate`后，重新运行`npm install --omit=dev`或`npm install`即可
 
 如果你是在release下载的压缩包，则解压后项目目录执行以下命令安装依赖：
 
 ```bash
 npm install --omit=dev
 ```
-
 
 如果你是直接下载的源码，则在本目录中运行以下命令
 
@@ -120,8 +120,8 @@ location /xxx { # 该规则用于代理路径下的ws请求
 }
 ```
 
-注：上面的`xxx`是你想要代理的路径（可以多级），注意`$remote_addr`的转发名字与config.ts中的`proxy.header`对应，同时启用`proxy.enabled`，这用于校验相同IP多次使用错误连接码连接时的封禁
-
+注：上面的`xxx`是你想要代理的路径（可以多级），注意`$remote_addr`的转发名字与config.ts中的`proxy.header`
+对应，同时启用`proxy.enabled`，这用于校验相同IP多次使用错误连接码连接时的封禁
 
 ## 附录
 
@@ -134,6 +134,7 @@ location /xxx { # 该规则用于代理路径下的ws请求
 | `CONFIG_PATH` | 配置文件路径，默认使用项目目录下的`config.js`
 | `LOG_PATH` | 服务日志保存路径，默认保存在服务目录下的`logs`文件夹内
 | `DATA_PATH` | 同步数据保存路径，默认保存在服务目录下的`data`文件夹内
+| `CLEAR_DELETE_USER_DATA` | 清理已删除用户的相关数据，默认false不清理
 
 ### PM2常用命令
 
