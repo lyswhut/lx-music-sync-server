@@ -11,10 +11,13 @@ WORKDIR /server
 EXPOSE 9527
 ENV PORT 9527
 ENV BIND_IP '0.0.0.0'
-ENV CONFIG_PATH '/server/config.js'
-ENV LOG_PATH '/server/logs'
-ENV DATA_PATH '/server/data'
+ENV LOG_PATH '/server/user/logs'
+ENV DATA_PATH '/server/user/data'
 ENV CLEAR_DELETE_USER_DATA 'false'
+ENV DEFAULT_USER_NAME 'mySyncServer'
+ENV DEFAULT_CONNECT_PWD 'mySyncServer'
+ENV DEFAULT_MAXS_SNAPSHOT_NUM 10
+ENV CONFIG_PATH '/server/user/config.js'
 COPY --from=builder ./server/server ./server
 COPY package.json package-lock.json config.js index.js ./
 RUN npm ci --omit=dev
