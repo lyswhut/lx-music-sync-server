@@ -138,7 +138,7 @@ export const saveSnapshotInfo = (userName: string, info: SnapshotInfo) => {
 }
 
 export const getSnapshot = (userName: string, name: string) => {
-  const filePath = path.join(lx.dataPath, userName, `snapshot_${name}`)
+  const filePath = path.join(lx.dataPath, userName, 'snapshot', `snapshot_${name}`)
   let listData: LX.Sync.ListData
   try {
     listData = JSON.parse(fs.readFileSync(filePath).toString('utf-8'))
@@ -151,7 +151,7 @@ export const getSnapshot = (userName: string, name: string) => {
 
 export const saveSnapshot = (userName: string, name: string, data: string) => {
   syncLog.info('saveSnapshot', name)
-  const filePath = path.join(lx.dataPath, userName, `snapshot_${name}`)
+  const filePath = path.join(lx.dataPath, userName, 'snapshot', `snapshot_${name}`)
   try {
     fs.writeFileSync(filePath, data)
   } catch (err) {
@@ -162,7 +162,7 @@ export const saveSnapshot = (userName: string, name: string, data: string) => {
 
 export const removeSnapshot = (userName: string, name: string) => {
   syncLog.info('removeSnapshot', name)
-  const filePath = path.join(lx.dataPath, userName, `snapshot_${name}`)
+  const filePath = path.join(lx.dataPath, userName, 'snapshot', `snapshot_${name}`)
   try {
     fs.unlinkSync(filePath)
   } catch (err) {
