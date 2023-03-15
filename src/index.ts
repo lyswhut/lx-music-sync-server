@@ -93,9 +93,16 @@ global.lx = {
   users: {}
 }
 
-const configPath = process.env.CONFIG_PATH ?? path.join(__dirname, '../config.js')
+process.env.CONFIG_PATH = path.join(__dirname, '../data/config.js')
+let configPath = path.join(__dirname, '../config.js')
+if (process.env.CONFIG_PATH) {
+  if (!fs.existsSync(process.env.CONFIG_PATH))
+    fs.copyFileSync(configPath, process.env.CONFIG_PATH)
+  console.log('create【' + process.env.CONFIG_PATH + '】profile')
+  configPath = process.env.CONFIG_PATH
+}
 
-if (!fs.existsSync(configPath) || !margeConfig(configPath)) {
+if (!margeConfig(configPath)) {
   console.log('The user profile is empty, the default configuration will be used')
   const userName = process.env.CONNECT_PWD ?? 'mySyncServer'
   global.lx.users[userName] = {
