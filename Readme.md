@@ -127,14 +127,17 @@ location /xxx { # 该规则用于代理路径下的ws请求
 
 ### 可用的环境变量
 
-| 变量名称 | 说明
-|:---:| ---
-| `PORT` | 绑定的端口号，默认`9527`
-| `BIND_IP` | 绑定的IP地址，默认`0.0.0.0`，接受所有IP请求
-| `CONFIG_PATH` | 配置文件路径，默认使用项目目录下的`config.js`
-| `LOG_PATH` | 服务日志保存路径，默认保存在服务目录下的`logs`文件夹内
-| `DATA_PATH` | 同步数据保存路径，默认保存在服务目录下的`data`文件夹内
-| `CLEAR_DELETE_USER_DATA` | 清理已删除用户的相关数据，默认false不清理
+|            变量名称             | 说明
+|:---------------------------:| ---
+|           `PORT`            | 绑定的端口号，默认`9527`
+|          `BIND_IP`          | 绑定的IP地址，默认`0.0.0.0`，接受所有IP请求
+|         `LOG_PATH`          | 服务日志保存路径，默认保存在服务目录下的`logs`文件夹内
+|         `DATA_PATH`         | 同步数据保存路径，默认保存在服务目录下的`data`文件夹内
+|  `CLEAR_DELETE_USER_DATA`   | 清理已删除用户的相关数据，默认false不清理
+|     `DEFAULT_USER_NAME`     | 默认配置用户名,默认 mySyncServer
+|    `DEFAULT_CONNECT_PWD`    | 默认配置连接密码，若在外网，务必增加密码复杂度
+| `DEFAULT_MAXS_SNAPSHOT_NUM` | 默认配置最大备份快照数，默认10
+|        `CONFIG_PATH`        | 配置文件路径，默认使用项目目录下的`config.js`，修改配置增加用户后默认用户失效
 
 ### PM2常用命令
 
