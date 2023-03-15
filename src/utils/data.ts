@@ -30,7 +30,6 @@ const getDevicesInfos = () => {
     devicesInfo.serverId = localDevicesInfo.serverId
     for (const userName of Object.keys(localDevicesInfo.userNames)) {
       if (isItInTheArray(userName, userNames) || !global.lx.clearDeleteUserData) {
-        console.log('加载本地【', userName, '】信息')
         devicesInfo.userNames[userName] = localDevicesInfo.userNames[userName]
       }
     }
@@ -82,9 +81,9 @@ export const clearOldSnapshot = (userName: string) => {
   const snapshotInfo = snapshotInfos[userName]
   if (!snapshotInfo) return
   const snapshotList = snapshotInfo.list.filter(name => !isIncluedsDevice(userName, name))
-  // console.log(snapshotList.length, lx.config.maxSsnapshotNum)
-  let requiredSave = snapshotList.length > global.lx.users[userName].maxSsnapshotNum
-  while (snapshotList.length > global.lx.users[userName].maxSsnapshotNum) {
+  // console.log(snapshotList.length, lx.config.maxSnapshotNum)
+  let requiredSave = snapshotList.length > global.lx.users[userName].maxSnapshotNum
+  while (snapshotList.length > global.lx.users[userName].maxSnapshotNum) {
     const name = snapshotList.pop()
     if (name) {
       removeSnapshot(userName, name)

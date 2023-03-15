@@ -30,21 +30,24 @@ const exit = (message: string): never => {
 export const isEmpty = (o: any) => {
   if (o === null) return true
   if (o === undefined) return true
-  return o === '';
+  if (typeof o === 'string' && o === '') return true
+  return Object.keys(o).length === 0;
 }
 
 export const isItInTheArray = (key: string, array: Array<string>) => {
   return array.indexOf(key) > -1
 }
 
-const margeConfig = (p: string) => {
+const margeConfig = (configPath: string) => {
   let configs: Record<string, LX.Config>
   try {
-    configs = path.extname(p) == '.js' ? require(p) : JSON.parse(fs.readFileSync(p).toString())
+    configs = path.extname(configPath) == '.js' ? require(configPath) : JSON.parse(fs.readFileSync(configPath).toString())
   } catch (err: any) {
     console.warn('Read config error: ' + (err.message as string))
     return false
   }
+  if (isEmpty(configs)) return false
+
   const userNames = Object.keys(configs)
   const passwords = Object.values(configs).map(c => c.connectPasword)
 
@@ -65,15 +68,16 @@ const margeConfig = (p: string) => {
     if (passwords.filter(pw => pw === config.connectPasword).length > 1) {
       exit('The password is duplicate, please modify the configuration file')
     }
-    if (!config.hasOwnProperty('maxSsnapshotNum') || isEmpty(config.maxSsnapshotNum)) {
-      config.maxSsnapshotNum = defaultConfig.users.mySyncServer.maxSsnapshotNum
+    if (!config.hasOwnProperty('maxSnapshotNum') || isEmpty(config.maxSnapshotNum)) {
+      config.maxSnapshotNum = defaultConfig.users.mySyncServer.maxSnapshotNum
     }
     if (!config.hasOwnProperty('list.addMusicLocationType') || isEmpty(config['list.addMusicLocationType'])) {
       config['list.addMusicLocationType'] = defaultConfig.users.mySyncServer["list.addMusicLocationType"]
     }
+    console.log('Load' + userName + ' config')
   }
   global.lx.users = configs
-  console.log('Load config: ' + p)
+  console.log('Load config: ' + configPath + 'ok')
   return true
 }
 
@@ -86,12 +90,25 @@ global.lx = {
   'proxy.enabled': Boolean(process.env.PROXY_ENABLED ?? defaultConfig["proxy.enabled"]),
   'proxy.header': process.env.PROXY_HEADER ?? defaultConfig["proxy.header"],
   clearDeleteUserData: Boolean(process.env.CLEAR_DELETE_USER_DATA ?? defaultConfig.clearDeleteUserData),
-  users: defaultConfig.users
+  users: {}
 }
 
-const configPath = path.join(__dirname, '../config.js')
-fs.existsSync(configPath) && margeConfig(configPath)
-process.env.CONFIG_PATH && fs.existsSync(process.env.CONFIG_PATH) && margeConfig(process.env.CONFIG_PATH)
+const configPath = process.env.CONFIG_PATH ?? path.join(__dirname, '../config.js')
+
+if (!fs.existsSync(configPath) || !margeConfig(configPath)) {
+  console.log('The user profile is empty, the default configuration will be used')
+  const userName = process.env.CONNECT_PWD ?? 'mySyncServer'
+  global.lx.users[userName] = {
+    state: true,
+    userName: userName,
+    connectPasword: process.env.CONNECT_PWD ?? defaultConfig.users.mySyncServer.connectPasword,
+    maxSnapshotNum: process.env.MAXS_SNAPSHOT_NUM ?? defaultConfig.users.mySyncServer.maxSnapshotNum,
+    'list.addMusicLocationType': defaultConfig.users.mySyncServer['list.addMusicLocationType'],
+  }
+  if (isEmpty(defaultConfig.users.mySyncServer.connectPasword)) {
+    exit('The default user has not set the password. Please modify the configuration file defaultConfig.js or set the environment variable CONNECT_ PWD')
+  }
+}
 
 export const checkAndCreateDirSync = (path: string) => {
   if (!fs.existsSync(path)) {
@@ -109,14 +126,14 @@ function deleteFolder(path: string) {
   let files = [];
   if (fs.existsSync(path)) {
     files = fs.readdirSync(path);
-    files.forEach(function (file, index) {
+    for (const file of files) {
       const curPath = path + "/" + file;
       if (fs.statSync(curPath).isDirectory()) { // recurse
         deleteFolder(curPath);
       } else { // delete file
         fs.unlinkSync(curPath);
       }
-    });
+    }
     fs.rmdirSync(path);
   }
 }
@@ -134,14 +151,13 @@ if (global.lx.clearDeleteUserData) {
       const tempPath = path.join(global.lx.dataPath, file)
       fs.stat(tempPath, (err, stat) => {
         if (stat.isDirectory() && !isItInTheArray(file, userNames)) {
-          console.log('删除', tempPath, '目录')
+          console.log('Delete', tempPath, ' user directory')
           deleteFolder(tempPath)
         }
       })
     }
   })
 }
-
 
 initLogger()
 

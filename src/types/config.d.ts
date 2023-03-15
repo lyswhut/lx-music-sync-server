@@ -11,17 +11,17 @@ declare namespace LX {
     /**
      * 同步服务名称
      */
-    'userName': string
+    userName: string
 
     /**
      * 连接密码
      */
-    'connectPasword': string
+    connectPasword: string
 
     /**
      * 最大备份快照数
      */
-    'maxSsnapshotNum': number
+    maxSnapshotNum: number
 
     /**
      * 添加歌曲到我的列表时的方式
