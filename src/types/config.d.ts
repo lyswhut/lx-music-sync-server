@@ -8,6 +8,11 @@ declare namespace LX {
     name: string
 
     /**
+     * 连接密码
+     */
+    password: string
+
+    /**
      * 最大备份快照数
      */
     maxSnapshotNum?: number
@@ -51,7 +56,7 @@ declare namespace LX {
     /**
      * 同步用户
      */
-    users: Record<string, UserConfig>
+    users: UserConfig[]
   }
 }
 

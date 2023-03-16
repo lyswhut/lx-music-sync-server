@@ -11,7 +11,7 @@ type ENV_PARAMS_Type = typeof ENV_PARAMS
 type ENV_PARAMS_Value_Type = ENV_PARAMS_Type[number]
 
 let envParams: Partial<Record<Exclude<ENV_PARAMS_Value_Type, 'LX_USER_'>, string>> = {}
-let envUsers: Record<string, string> = {}
+let envUsers: LX.User[] = []
 const envLog = [
   ...(Object.values(ENV_PARAMS)
     .filter(v => v != 'LX_USER_')
@@ -24,9 +24,12 @@ const envLog = [
   ...Object.entries(process.env)
     .filter(([k, v]) => {
       if (k.startsWith('LX_USER_') && !!v) {
-        const pwd = k.replace('LX_USER_', '')
-        if (pwd) {
-          envUsers[pwd] = v
+        const name = k.replace('LX_USER_', '')
+        if (name && v) {
+          envUsers.push({
+            name,
+            password: v,
+          })
           return true
         }
       }
@@ -58,25 +61,22 @@ const margeConfig = (p: string) => {
     // @ts-expect-error
     if (config[key] !== undefined) newConfig[key] = config[key]
   }
+
   console.log('Load config: ' + p)
-  if (newConfig.users) {
-    for (const [pwd, user] of Object.entries(newConfig.users)) {
-      if (typeof user == 'string') {
-        newConfig.users[pwd] = {
-          name: user,
-          dataPath: '',
-        }
-      } else {
-        newConfig.users[pwd] = {
-          ...user,
-          dataPath: '',
-        }
-      }
+  if (newConfig.users.length) {
+    const users: LX.UserConfig[] = []
+    for (const user of newConfig.users) {
+      users.push({
+        ...user,
+        dataPath: '',
+      })
     }
+    newConfig.users = users
   }
   global.lx.config = newConfig
   return true
 }
+
 
 const p1 = path.join(__dirname, '../config.js')
 fs.existsSync(p1) && margeConfig(p1)
@@ -98,23 +98,25 @@ if (envParams.LIST_ADD_MUSIC_LOCATION_TYPE) {
   }
 }
 
-if (Object.keys(envUsers).length) {
-  const users: LX.Config['users'] = {}
+if (envUsers.length) {
+  const users: LX.Config['users'] = []
   let u
-  for (let [k, v] of Object.entries(envUsers)) {
+  for (let user of envUsers) {
     try {
-      u = JSON.parse(v) as LX.UserConfig
+      u = JSON.parse(user.password) as Omit<LX.User, 'name'>
     } catch {
-      users[k] = {
-        name: v,
+      users.push({
+        name: user.name,
+        password: user.password,
         dataPath: '',
-      }
+      })
       continue
     }
-    users[k] = {
+    users.push({
+      name: user.name,
       ...u,
       dataPath: '',
-    }
+    })
   }
   global.lx.config.users = users
 }
@@ -136,9 +138,12 @@ const checkAndCreateDir = (path: string) => {
 
 const checkUserConfig = (users: LX.Config['users']) => {
   const userNames: string[] = []
-  for (const user of Object.values(users)) {
-    if (userNames.includes(user.name)) exit('user name duplicate: ' + user.name)
+  const passwords: string[] = []
+  for (const user of users) {
+    if (userNames.includes(user.name)) exit('User name duplicate: ' + user.name)
+    if (passwords.includes(user.password)) exit('User password duplicate: ' + user.password)
     userNames.push(user.name)
+    passwords.push(user.password)
   }
 }
 
@@ -148,10 +153,10 @@ checkAndCreateDir(global.lx.userPath)
 checkUserConfig(global.lx.config.users)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { getUserDirname } = require('@/utils/data')
-for (const u of Object.values(global.lx.config.users)) {
-  const dataPath = path.join(global.lx.userPath, getUserDirname(u.name))
+for (const user of global.lx.config.users) {
+  const dataPath = path.join(global.lx.userPath, getUserDirname(user.name))
   checkAndCreateDir(dataPath)
-  u.dataPath = dataPath
+  user.dataPath = dataPath
 }
 initLogger()
 

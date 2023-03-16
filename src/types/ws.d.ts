@@ -6,7 +6,7 @@ declare global {
       isAlive?: boolean
       isReady: boolean
       keyInfo: LX.Sync.KeyInfo
-      userInfo: LX.Config['users'][keyof LX.Config['users']]
+      userInfo: LX.UserConfig
       onRemoteEvent: <T extends keyof LX.Sync.ActionSyncType>(
         eventName: T,
         handler: (data: LX.Sync.ActionSyncType[T]) => void

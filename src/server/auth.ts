@@ -47,8 +47,8 @@ export const authCode = async(req: http.IncomingMessage, res: http.ServerRespons
             msg = aesEncrypt(SYNC_CODE.helloMsg, keyInfo.key)
           }
         } else { // 连接码验证
-          for (const [password, userInfo] of Object.entries(users)) {
-            let key = ''.padStart(16, Buffer.from(password).toString('hex'))
+          for (const userInfo of users) {
+            let key = ''.padStart(16, Buffer.from(userInfo.password).toString('hex'))
             // const iv = Buffer.from(key.split('').reverse().join('')).toString('base64')
             key = Buffer.from(key).toString('base64')
             // console.log(req.headers.m, authCode, key)
@@ -72,8 +72,8 @@ export const authCode = async(req: http.IncomingMessage, res: http.ServerRespons
                 key: keyInfo.key,
                 serverName: global.lx.config.serverName,
               })), publicKey)
+              break
             }
-            break
           }
         }
       }

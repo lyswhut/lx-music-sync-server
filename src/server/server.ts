@@ -60,7 +60,7 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
     socket.close(SYNC_CLOSE_CODE.failed)
     return
   }
-  const user = Object.values(global.lx.config.users).find(u => u.name == userSpace.dataManage.devicesInfo.userName)
+  const user = global.lx.config.users.find(u => u.name == userName)
   if (!user) {
     socket.close(SYNC_CLOSE_CODE.failed)
     return

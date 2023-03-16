@@ -31,7 +31,7 @@ export const getServerId = (): string => {
 export const getUserDirname = (userName: string) => `${filterFileName(userName)}_${toMD5(userName).substring(0, 6)}`
 
 export const getUserConfig = (userName: string): Required<LX.User> => {
-  const user = Object.values(global.lx.config.users).find(u => u.name == userName)
+  const user = global.lx.config.users.find(u => u.name == userName)
   if (!user) throw new Error('user not found: ' + userName)
   return {
     maxSnapshotNum: global.lx.config.maxSnapshotNum,

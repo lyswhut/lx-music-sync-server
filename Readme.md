@@ -137,8 +137,8 @@ location /xxx { # 该规则用于代理路径下的ws请求
 | `DATA_PATH` | 同步数据保存路径，默认保存在服务目录下的`data`文件夹内
 | `MAX_SNAPSHOT_NUM` | 公共最大备份快照数
 | `SERVER_NAME` | 同步服务名称
-| `LIST_ADD_MUSIC_LOCATION_TYPE` | 公共添加歌曲到我的列表时的方式可用值为 top | bottom
-| `LX_USER_` | 以`LX_USER_`开头的环境变量将被识别为用户配置，可用的配置语法为：<br />1. `LX_USER_xxx='user1'`<br />2. `LX_USER_xxx='{"name":"user1"}'`<br />其中`LX_USER_`会被去掉，剩下的`xxx`为用户密码，`user1`为用户名，以上配置格式分别对应配置文件说明的两种配置格式，区别是方式二需要将用户具体配置转成JSON字符串传入，
+| `LIST_ADD_MUSIC_LOCATION_TYPE` | 公共添加歌曲到我的列表时的方式可用值为 `top`、`bottom`
+| `LX_USER_` | 以`LX_USER_`开头的环境变量将被识别为用户配置，可用的配置语法为：<br />1. `LX_USER_user1='xxx'`<br />2. `LX_USER_user1='{"password":"xxx"}'`<br />其中`LX_USER_`会被去掉，剩下的`user1`为用户名，`xxx`为用户密码，配置方式1为简写模式，只指定用户名及密码，其他配置使用公共配置，配置方式2为JSON字符串模式，配置内容参考`config.js`，由于该方式在变量名指定了用户名，所以JSON里的用户名是可选的
 
 ### PM2常用命令
 
