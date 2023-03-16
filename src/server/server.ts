@@ -3,10 +3,12 @@ import url from 'node:url'
 import { WebSocketServer } from 'ws'
 import * as modules from './modules'
 import { authCode, authConnect } from './auth'
-import { getAddress, getServerId, getClientKeyInfo, saveClientKeyInfo, sendStatus, decryptMsg, encryptMsg } from '@/utils/tools'
+import { getAddress, getServerId, sendStatus, decryptMsg, encryptMsg } from '@/utils/tools'
 import syncList from './syncList'
 import { accessLog, startupLog, syncLog } from '@/utils/log4js'
 import { SYNC_CLOSE_CODE, SYNC_CODE } from '@/constants'
+import { getUserName } from '@/utils/data'
+import { getUserSpace, releaseUserSpace } from '@/user'
 
 
 let status: LX.Sync.Status = {
@@ -47,15 +49,27 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
 
 
   //   // if (typeof socket.handshake.query.i != 'string') return socket.disconnect(true)
-  const keyInfo = getClientKeyInfo(queryData.i)
+  const userName = getUserName(queryData.i)
+  if (!userName) {
+    socket.close(SYNC_CLOSE_CODE.failed)
+    return
+  }
+  const userSpace = getUserSpace(userName)
+  const keyInfo = userSpace.dataManage.getClientKeyInfo(queryData.i)
   if (!keyInfo) {
     socket.close(SYNC_CLOSE_CODE.failed)
     return
   }
+  const user = Object.values(global.lx.config.users).find(u => u.name == userSpace.dataManage.devicesInfo.userName)
+  if (!user) {
+    socket.close(SYNC_CLOSE_CODE.failed)
+    return
+  }
   keyInfo.lastSyncDate = Date.now()
-  saveClientKeyInfo(keyInfo)
+  userSpace.dataManage.saveClientKeyInfo(keyInfo)
   //   // socket.lx_keyInfo = keyInfo
   socket.keyInfo = keyInfo
+  socket.userInfo = user
   try {
     await syncList(wss as LX.SocketServer, socket)
   } catch (err) {
@@ -77,12 +91,13 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
   socket.isReady = true
 }
 
-const handleUnconnection = () => {
+const handleUnconnection = (userName: string) => {
   // console.log('unconnection')
   // console.log(socket.handshake.query)
   for (const module of Object.values(modules)) {
     module.unregisterListHandler()
   }
+  releaseUserSpace(userName)
 }
 
 const authConnection = (req: http.IncomingMessage, callback: (err: string | null | undefined, success: boolean) => void) => {
@@ -119,7 +134,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
         msg = SYNC_CODE.idPrefix + getServerId()
         break
       case '/ah':
-        void authCode(req, res, global.lx.config.connectPasword)
+        void authCode(req, res, lx.config.users)
         break
       default:
         code = 401
@@ -168,7 +183,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
       for (const handler of closeEvents) void handler(err)
       events = {}
       closeEvents = []
-      if (!status.devices.length) handleUnconnection()
+      if (!status.devices.map(d => getUserName(d.clientId)).filter(n => n == socket.userInfo.name).length) handleUnconnection(socket.userInfo.name)
     })
     socket.onRemoteEvent = function(eventName, handler) {
       let eventArr = events[eventName]
@@ -199,6 +214,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
     // This function is not defined on purpose. Implement it with your own logic.
     authConnection(request, err => {
       if (err) {
+        console.log(err)
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
         socket.destroy()
         return

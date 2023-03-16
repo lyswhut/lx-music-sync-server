@@ -5,7 +5,7 @@ declare global {
   interface Lx {
     logPath: string
     dataPath: string
-    snapshotPath: string
+    userPath: string
     config: LX.Config
   }
 

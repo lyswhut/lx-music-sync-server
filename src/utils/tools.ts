@@ -1,10 +1,11 @@
 import { networkInterfaces } from 'node:os'
 import { randomBytes, createCipheriv, createDecipheriv, publicEncrypt, privateDecrypt, constants } from 'node:crypto'
-import { join } from 'node:path'
+// import { join } from 'node:path'
 import type http from 'node:http'
 // import getStore from '@/utils/store'
 import { syncLog } from './log4js'
-import { saveClientKeyInfo } from './data'
+import { getUserName } from './data'
+// import { saveClientKeyInfo } from './data'
 
 export const getAddress = (): string[] => {
   const nets = networkInterfaces()
@@ -74,13 +75,12 @@ export const decryptMsg = (keyInfo: LX.Sync.KeyInfo, enMsg: string): string => {
   // return msg
 }
 
-export const getSnapshotFilePath = (keyInfo: LX.Sync.KeyInfo): string => {
-  return join(global.lx.snapshotPath, `snapshot_${keyInfo.snapshotKey}.json`)
-}
-
+// export const getSnapshotFilePath = (keyInfo: LX.Sync.KeyInfo): string => {
+//   return join(global.lx.snapshotPath, `snapshot_${keyInfo.snapshotKey}.json`)
+// }
 
 export const sendStatus = (status: LX.Sync.Status) => {
-  syncLog.info('status', status.status, status.devices.map(d => d.deviceName))
+  syncLog.info('status', status.status, status.devices.map(d => `${getUserName(d.clientId) ?? ''} ${d.deviceName}`))
 }
 
 export const createClientKeyInfo = (deviceName: string, isMobile: boolean): LX.Sync.KeyInfo => {
@@ -92,13 +92,11 @@ export const createClientKeyInfo = (deviceName: string, isMobile: boolean): LX.S
     snapshotKey: '',
     lastSyncDate: 0,
   }
-  saveClientKeyInfo(keyInfo)
   return keyInfo
 }
 
 
 export {
   getServerId,
-  getClientKeyInfo,
-  saveClientKeyInfo,
+  getUserConfig,
 } from './data'

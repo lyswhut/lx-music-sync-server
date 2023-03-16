@@ -17,6 +17,9 @@ module.exports = {
       env_production: {
         // PORT: 3100, // 配置绑定的端口号默认9527
         // BIND_IP: '0.0.0.0', // 配置绑定IP为0.0.0.0将接受所有IP访问
+        // CONFIG_PATH: '',
+        // LOG_PATH: '',
+        // DATA_PATH: '',
         NODE_ENV: 'production',
       },
     },

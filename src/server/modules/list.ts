@@ -1,58 +1,58 @@
 // import { throttle } from '@common/utils/common'
 // import { sendSyncActionList } from '@main/modules/winMain'
 import { SYNC_CLOSE_CODE } from '@/constants'
-import { createSnapshot } from '@/listManage/action'
-import { updateDeviceSnapshotKey } from '@/utils/data'
+import { getUserSpace } from '@/user'
 import { encryptMsg } from '@/utils/tools'
 
 let wss: LX.SocketServer | null
-let removeListener: (() => void) | null
+// let removeListener: (() => void) | null
 
 // type listAction = 'list:action'
 
-const handleListAction = async({ action, data }: LX.Sync.ActionList) => {
-  console.log('handleListAction', action)
+const handleListAction = async(userName: string, { action, data }: LX.Sync.ActionList) => {
+  console.log('handleListAction', userName, action)
   switch (action) {
     case 'list_data_overwrite':
-      await global.event_list.list_data_overwrite(data, true)
+      await global.event_list.list_data_overwrite(userName, data, true)
       break
     case 'list_create':
-      await global.event_list.list_create(data.position, data.listInfos, true)
+      await global.event_list.list_create(userName, data.position, data.listInfos, true)
       break
     case 'list_remove':
-      await global.event_list.list_remove(data, true)
+      await global.event_list.list_remove(userName, data, true)
       break
     case 'list_update':
-      await global.event_list.list_update(data, true)
+      await global.event_list.list_update(userName, data, true)
       break
     case 'list_update_position':
-      await global.event_list.list_update_position(data.position, data.ids, true)
+      await global.event_list.list_update_position(userName, data.position, data.ids, true)
       break
     case 'list_music_add':
-      await global.event_list.list_music_add(data.id, data.musicInfos, data.addMusicLocationType, true)
+      await global.event_list.list_music_add(userName, data.id, data.musicInfos, data.addMusicLocationType, true)
       break
     case 'list_music_move':
-      await global.event_list.list_music_move(data.fromId, data.toId, data.musicInfos, data.addMusicLocationType, true)
+      await global.event_list.list_music_move(userName, data.fromId, data.toId, data.musicInfos, data.addMusicLocationType, true)
       break
     case 'list_music_remove':
-      await global.event_list.list_music_remove(data.listId, data.ids, true)
+      await global.event_list.list_music_remove(userName, data.listId, data.ids, true)
       break
     case 'list_music_update':
-      await global.event_list.list_music_update(data, true)
+      await global.event_list.list_music_update(userName, data, true)
       break
     case 'list_music_update_position':
-      await global.event_list.list_music_update_position(data.listId, data.position, data.ids, true)
+      await global.event_list.list_music_update_position(userName, data.listId, data.position, data.ids, true)
       break
     case 'list_music_overwrite':
-      await global.event_list.list_music_overwrite(data.listId, data.musicInfos, true)
+      await global.event_list.list_music_overwrite(userName, data.listId, data.musicInfos, true)
       break
     case 'list_music_clear':
-      await global.event_list.list_music_clear(data, true)
+      await global.event_list.list_music_clear(userName, data, true)
       break
     default:
       return null
   }
-  let key = createSnapshot()
+  const userSpace = getUserSpace(userName)
+  let key = userSpace.listManage.createSnapshot()
   return key
 }
 
@@ -137,17 +137,18 @@ const handleListAction = async({ action, data }: LX.Sync.ActionList) => {
 //   // ...
 // }
 
-const broadcast = async(key: string, data: any, excludeIds: string[] = []) => {
+const broadcast = async(socket: LX.Socket, key: string, data: any, excludeIds: string[] = []) => {
   if (!wss) return
   const dataStr = JSON.stringify({ action: 'list:sync:action', data })
-  for (const socket of wss.clients) {
-    if (excludeIds.includes(socket.keyInfo.clientId) || !socket.isReady) continue
-    socket.send(encryptMsg(socket.keyInfo, dataStr), (err) => {
+  const userSpace = getUserSpace(socket.userInfo.name)
+  for (const client of wss.clients) {
+    if (excludeIds.includes(client.keyInfo.clientId) || !client.isReady || client.userInfo.name != socket.userInfo.name) continue
+    client.send(encryptMsg(client.keyInfo, dataStr), (err) => {
       if (err) {
-        socket.close(SYNC_CLOSE_CODE.failed)
+        client.close(SYNC_CLOSE_CODE.failed)
         return
       }
-      updateDeviceSnapshotKey(socket.keyInfo, key)
+      userSpace.dataManage.updateDeviceSnapshotKey(client.keyInfo, key)
     })
   }
 }
@@ -164,13 +165,15 @@ export const registerListHandler = (_wss: LX.SocketServer, socket: LX.Socket) =>
     // removeListener = registerListActionEvent()
   }
 
+  const userSpace = getUserSpace(socket.userInfo.name)
   socket.onRemoteEvent('list:sync:action', (action) => {
     if (!socket.isReady) return
     // console.log(msg)
-    void handleListAction(action).then(key => {
+    void handleListAction(socket.userInfo.name, action).then(key => {
       if (!key) return
-      updateDeviceSnapshotKey(socket.keyInfo, key)
-      void broadcast(key, action, [socket.keyInfo.clientId])
+      console.log(key)
+      userSpace.dataManage.updateDeviceSnapshotKey(socket.keyInfo, key)
+      void broadcast(socket, key, action, [socket.keyInfo.clientId])
     })
     // socket.broadcast.emit('list:action', { action: 'list_remove', data: { id: 'default', index: 0 } })
   })
@@ -180,8 +183,8 @@ export const registerListHandler = (_wss: LX.SocketServer, socket: LX.Socket) =>
 export const unregisterListHandler = () => {
   wss = null
 
-  if (removeListener) {
-    removeListener()
-    removeListener = null
-  }
+  // if (removeListener) {
+  //   removeListener()
+  //   removeListener = null
+  // }
 }

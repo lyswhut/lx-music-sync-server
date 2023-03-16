@@ -1,6 +1,6 @@
 module.exports = {
   upgrade: true,
-  // reject: [
-  //   'chalk',
-  // ],
+  reject: [
+    'chalk',
+  ],
 }

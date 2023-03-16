@@ -4,16 +4,16 @@ import {
   aesEncrypt,
   aesDecrypt,
   createClientKeyInfo,
-  getClientKeyInfo,
-  saveClientKeyInfo,
   rsaEncrypt,
   getIP,
 } from '@/utils/tools'
 import querystring from 'node:querystring'
 import store from '@/utils/cache'
+import { getUserSpace } from '@/user'
+import { getUserName, setUserName } from '@/utils/data'
 
 
-export const authCode = async(req: http.IncomingMessage, res: http.ServerResponse, password: string) => {
+export const authCode = async(req: http.IncomingMessage, res: http.ServerResponse, users: LX.Config['users']) => {
   let code = 401
   let msg: string = SYNC_CODE.msgAuthFailed
 
@@ -25,7 +25,10 @@ export const authCode = async(req: http.IncomingMessage, res: http.ServerRespons
         label:
         if (req.headers.i) { // key验证
           if (typeof req.headers.i != 'string') break label
-          const keyInfo = getClientKeyInfo(req.headers.i)
+          const userName = getUserName(req.headers.i)
+          if (!userName) break label
+          const userSpace = getUserSpace(userName)
+          const keyInfo = userSpace.dataManage.getClientKeyInfo(req.headers.i)
           if (!keyInfo) break label
           let text
           try {
@@ -39,34 +42,38 @@ export const authCode = async(req: http.IncomingMessage, res: http.ServerRespons
             const deviceName = text.replace(SYNC_CODE.authMsg, '') || 'Unknown'
             if (deviceName != keyInfo.deviceName) {
               keyInfo.deviceName = deviceName
-              saveClientKeyInfo(keyInfo)
+              userSpace.dataManage.saveClientKeyInfo(keyInfo)
             }
             msg = aesEncrypt(SYNC_CODE.helloMsg, keyInfo.key)
           }
         } else { // 连接码验证
-          let key = ''.padStart(16, Buffer.from(password).toString('hex'))
-          // const iv = Buffer.from(key.split('').reverse().join('')).toString('base64')
-          key = Buffer.from(key).toString('base64')
-          // console.log(req.headers.m, authCode, key)
-          let text
-          try {
-            text = aesDecrypt(req.headers.m, key)
-          } catch (err) {
-            break label
-          }
-          // console.log(text)
-          if (text.startsWith(SYNC_CODE.authMsg)) {
-            code = 200
-            const data = text.split('\n')
-            const publicKey = `-----BEGIN PUBLIC KEY-----\n${data[1]}\n-----END PUBLIC KEY-----`
-            const deviceName = data[2] || 'Unknown'
-            const isMobile = data[3] == 'lx_music_mobile'
-            const keyInfo = createClientKeyInfo(deviceName, isMobile)
-            msg = rsaEncrypt(Buffer.from(JSON.stringify({
-              clientId: keyInfo.clientId,
-              key: keyInfo.key,
-              serverName: global.lx.config.serverName,
-            })), publicKey)
+          for (const [password, userInfo] of Object.entries(users)) {
+            let key = ''.padStart(16, Buffer.from(password).toString('hex'))
+            // const iv = Buffer.from(key.split('').reverse().join('')).toString('base64')
+            key = Buffer.from(key).toString('base64')
+            // console.log(req.headers.m, authCode, key)
+            let text
+            try {
+              text = aesDecrypt(req.headers.m, key)
+            } catch { continue }
+            // console.log(text)
+            if (text.startsWith(SYNC_CODE.authMsg)) {
+              code = 200
+              const data = text.split('\n')
+              const publicKey = `-----BEGIN PUBLIC KEY-----\n${data[1]}\n-----END PUBLIC KEY-----`
+              const deviceName = data[2] || 'Unknown'
+              const isMobile = data[3] == 'lx_music_mobile'
+              const keyInfo = createClientKeyInfo(deviceName, isMobile)
+              const userSpace = getUserSpace(userInfo.name)
+              userSpace.dataManage.saveClientKeyInfo(keyInfo)
+              setUserName(keyInfo.clientId, userInfo.name)
+              msg = rsaEncrypt(Buffer.from(JSON.stringify({
+                clientId: keyInfo.clientId,
+                key: keyInfo.key,
+                serverName: global.lx.config.serverName,
+              })), publicKey)
+            }
+            break
           }
         }
       }
@@ -91,7 +98,11 @@ export const authConnect = async(req: http.IncomingMessage) => {
   const t = query.t
   label:
   if (typeof i == 'string' && typeof t == 'string') {
-    const keyInfo = getClientKeyInfo(i)
+    const userName = getUserName(i)
+    // console.log(userName)
+    if (!userName) break label
+    const userSpace = getUserSpace(userName)
+    const keyInfo = userSpace.dataManage.getClientKeyInfo(i)
     if (!keyInfo) break label
     let text
     try {

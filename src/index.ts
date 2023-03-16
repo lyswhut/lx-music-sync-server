@@ -4,19 +4,42 @@ import fs from 'fs'
 import path from 'path'
 import { initLogger } from '@/utils/log4js'
 import defaultConfig from './defaultConfig'
+import { ENV_PARAMS } from './constants'
+import { checkAndCreateDirSync } from './utils'
 
-const envLog = ['PORT', 'BIND_IP', 'CONNECT_PWD', 'CONFIG_PATH', 'LOG_PATH', 'DATA_PATH']
-  .map(e => [e, process.env[e]])
-  .filter(([_, v]) => v !== undefined)
-  .map(([e, v]) => `${e as string}: ${v as string}`)
-  .join('\n')
+type ENV_PARAMS_Type = typeof ENV_PARAMS
+type ENV_PARAMS_Value_Type = ENV_PARAMS_Type[number]
+
+let envParams: Partial<Record<Exclude<ENV_PARAMS_Value_Type, 'LX_USER_'>, string>> = {}
+let envUsers: Record<string, string> = {}
+const envLog = [
+  ...(Object.values(ENV_PARAMS)
+    .filter(v => v != 'LX_USER_')
+    .map(e => [e, process.env[e]]) as Array<[Exclude<ENV_PARAMS_Value_Type, 'LX_USER_'>, string]>
+  ).filter(([k, v]) => {
+    if (!v) return false
+    envParams[k] = v
+    return true
+  }),
+  ...Object.entries(process.env)
+    .filter(([k, v]) => {
+      if (k.startsWith('LX_USER_') && !!v) {
+        const pwd = k.replace('LX_USER_', '')
+        if (pwd) {
+          envUsers[pwd] = v
+          return true
+        }
+      }
+      return false
+    }),
+].map(([e, v]) => `${e}: ${v as string}`).join('\n')
 if (envLog) console.log(envLog)
 
-const dataPath = process.env.DATA_PATH ?? path.join(__dirname, '../data')
+const dataPath = envParams.DATA_PATH ?? path.join(__dirname, '../data')
 global.lx = {
-  logPath: process.env.LOG_PATH ?? path.join(__dirname, '../logs'),
+  logPath: envParams.LOG_PATH ?? path.join(__dirname, '../logs'),
   dataPath,
-  snapshotPath: path.join(dataPath, './snapshot'),
+  userPath: path.join(dataPath, 'users'),
   config: defaultConfig,
 }
 
@@ -36,41 +59,100 @@ const margeConfig = (p: string) => {
     if (config[key] !== undefined) newConfig[key] = config[key]
   }
   console.log('Load config: ' + p)
+  if (newConfig.users) {
+    for (const [pwd, user] of Object.entries(newConfig.users)) {
+      if (typeof user == 'string') {
+        newConfig.users[pwd] = {
+          name: user,
+          dataPath: '',
+        }
+      } else {
+        newConfig.users[pwd] = {
+          ...user,
+          dataPath: '',
+        }
+      }
+    }
+  }
   global.lx.config = newConfig
   return true
 }
 
 const p1 = path.join(__dirname, '../config.js')
 fs.existsSync(p1) && margeConfig(p1)
-process.env.CONFIG_PATH && fs.existsSync(process.env.CONFIG_PATH) && margeConfig(process.env.CONFIG_PATH)
-if (process.env.CONNECT_PWD != null) lx.config.connectPasword = process.env.CONNECT_PWD
+envParams.CONFIG_PATH && fs.existsSync(envParams.CONFIG_PATH) && margeConfig(envParams.CONFIG_PATH)
+if (envParams.PROXY_HEADER) {
+  global.lx.config['proxy.enabled'] = true
+  global.lx.config['proxy.header'] = envParams.PROXY_HEADER
+}
+if (envParams.MAX_SNAPSHOT_NUM) {
+  const num = parseInt(envParams.MAX_SNAPSHOT_NUM)
+  if (!isNaN(num)) global.lx.config.maxSnapshotNum = num
+}
+if (envParams.LIST_ADD_MUSIC_LOCATION_TYPE) {
+  switch (envParams.LIST_ADD_MUSIC_LOCATION_TYPE) {
+    case 'top':
+    case 'bottom':
+      global.lx.config['list.addMusicLocationType'] = envParams.LIST_ADD_MUSIC_LOCATION_TYPE
+      break
+  }
+}
 
+if (Object.keys(envUsers).length) {
+  const users: LX.Config['users'] = {}
+  let u
+  for (let [k, v] of Object.entries(envUsers)) {
+    try {
+      u = JSON.parse(v) as LX.UserConfig
+    } catch {
+      users[k] = {
+        name: v,
+        dataPath: '',
+      }
+      continue
+    }
+    users[k] = {
+      ...u,
+      dataPath: '',
+    }
+  }
+  global.lx.config.users = users
+}
 
 const exit = (message: string): never => {
   console.error(message)
   process.exit(0)
 }
 
-if (!global.lx.config.connectPasword) {
-  exit('Connection password is not set, please edit config.ts file')
-}
-
-
-export const checkAndCreateDirSync = (path: string) => {
-  if (!fs.existsSync(path)) {
-    try {
-      fs.mkdirSync(path, { recursive: true })
-    } catch (e: any) {
-      if (e.code !== 'EEXIST') {
-        exit(`Could not set up log directory, error was: ${e.message as string}`)
-      }
+const checkAndCreateDir = (path: string) => {
+  try {
+    checkAndCreateDirSync(path)
+  } catch (e: any) {
+    if (e.code !== 'EEXIST') {
+      exit(`Could not set up log directory, error was: ${e.message as string}`)
     }
   }
 }
 
-checkAndCreateDirSync(global.lx.logPath)
-checkAndCreateDirSync(global.lx.dataPath)
-checkAndCreateDirSync(global.lx.snapshotPath)
+const checkUserConfig = (users: LX.Config['users']) => {
+  const userNames: string[] = []
+  for (const user of Object.values(users)) {
+    if (userNames.includes(user.name)) exit('user name duplicate: ' + user.name)
+    userNames.push(user.name)
+  }
+}
+
+checkAndCreateDir(global.lx.logPath)
+checkAndCreateDir(global.lx.dataPath)
+checkAndCreateDir(global.lx.userPath)
+checkUserConfig(global.lx.config.users)
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { getUserDirname } = require('@/utils/data')
+for (const u of Object.values(global.lx.config.users)) {
+  const dataPath = path.join(global.lx.userPath, getUserDirname(u.name))
+  checkAndCreateDir(dataPath)
+  u.dataPath = dataPath
+}
 initLogger()
 
 
@@ -92,8 +174,8 @@ function normalizePort(val: string) {
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT ?? '9527')
-const bindIP = process.env.BIND_IP ?? '127.0.0.1'
+const port = normalizePort(envParams.PORT ?? '9527')
+const bindIP = envParams.BIND_IP ?? '0.0.0.0'
 
 void Promise.all([import('@/event'), import('@/server')]).then(async([{ createListEvent }, { startServer }]) => {
   global.event_list = createListEvent()
