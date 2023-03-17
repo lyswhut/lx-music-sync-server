@@ -303,7 +303,7 @@ export class ListManage {
       const index = targetList.findIndex(l => l.id == musicInfo.id)
       if (index < 0) continue
       const info: LX.Music.MusicInfo = { ...targetList[index] }
-      console.log(musicInfo)
+      // console.log(musicInfo)
       Object.assign(info, {
         name: musicInfo.name,
         singer: musicInfo.singer,
