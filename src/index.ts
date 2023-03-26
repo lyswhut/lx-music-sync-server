@@ -180,7 +180,7 @@ function normalizePort(val: string) {
  */
 
 const port = normalizePort(envParams.PORT ?? '9527')
-const bindIP = envParams.BIND_IP ?? '0.0.0.0'
+const bindIP = envParams.BIND_IP ?? '127.0.0.1'
 
 void Promise.all([import('@/event'), import('@/server')]).then(async([{ createListEvent }, { startServer }]) => {
   global.event_list = createListEvent()
