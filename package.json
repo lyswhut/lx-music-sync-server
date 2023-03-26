@@ -29,7 +29,7 @@
   "dependencies": {
     "bufferutil": "^4.0.7",
     "log4js": "^6.9.1",
-    "lru-cache": "^8.0.3",
+    "lru-cache": "^8.0.4",
     "utf-8-validate": "^6.0.3",
     "ws": "^8.13.0"
   },
@@ -39,11 +39,11 @@
     "chalk": "^4.1.2",
     "changelog-parser": "^3.0.1",
     "eslint-config-standard-with-typescript": "^34.0.1",
-    "nodemon": "^2.0.21",
+    "nodemon": "^2.0.22",
     "ts-node": "^10.9.1",
-    "tsc-alias": "^1.8.3",
+    "tsc-alias": "^1.8.4",
     "tsconfig-paths": "^4.1.2",
-    "typescript": "^4.9.5"
+    "typescript": "^5.0.2"
   },
   "nodemonConfig": {
     "ext": "js,ts",
