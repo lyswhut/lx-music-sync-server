@@ -48,7 +48,7 @@ export const authCode = async(req: http.IncomingMessage, res: http.ServerRespons
           }
         } else { // 连接码验证
           for (const userInfo of users) {
-            let key = ''.padStart(16, Buffer.from(userInfo.password).toString('hex'))
+            let key = ''.padStart(16, Buffer.from(userInfo.password, 'utf8').toString('hex'))
             // const iv = Buffer.from(key.split('').reverse().join('')).toString('base64')
             key = Buffer.from(key).toString('base64')
             // console.log(req.headers.m, authCode, key)

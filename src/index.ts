@@ -102,21 +102,25 @@ if (envUsers.length) {
   const users: LX.Config['users'] = []
   let u
   for (let user of envUsers) {
+    let isLikeJSON = true
     try {
       u = JSON.parse(user.password) as Omit<LX.User, 'name'>
     } catch {
+      isLikeJSON = false
+    }
+    if (isLikeJSON && typeof u == 'object') {
+      users.push({
+        name: user.name,
+        ...u,
+        dataPath: '',
+      })
+    } else {
       users.push({
         name: user.name,
         password: user.password,
         dataPath: '',
       })
-      continue
     }
-    users.push({
-      name: user.name,
-      ...u,
-      dataPath: '',
-    })
   }
   global.lx.config.users = users
 }
