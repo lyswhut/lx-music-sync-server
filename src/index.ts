@@ -12,31 +12,32 @@ type ENV_PARAMS_Value_Type = ENV_PARAMS_Type[number]
 
 let envParams: Partial<Record<Exclude<ENV_PARAMS_Value_Type, 'LX_USER_'>, string>> = {}
 let envUsers: LX.User[] = []
-const envLog = [
-  ...(Object.values(ENV_PARAMS)
-    .filter(v => v != 'LX_USER_')
-    .map(e => [e, process.env[e]]) as Array<[Exclude<ENV_PARAMS_Value_Type, 'LX_USER_'>, string]>
-  ).filter(([k, v]) => {
-    if (!v) return false
-    envParams[k] = v
-    return true
-  }),
-  ...Object.entries(process.env)
-    .filter(([k, v]) => {
-      if (k.startsWith('LX_USER_') && !!v) {
-        const name = k.replace('LX_USER_', '')
-        if (name && v) {
-          envUsers.push({
-            name,
-            password: v,
-          })
-          return true
-        }
-      }
-      return false
+const envParamKeys = Object.values(ENV_PARAMS).filter(v => v != 'LX_USER_')
+
+{
+  const envLog = [
+    ...(envParamKeys.map(e => [e, process.env[e]]) as Array<[Exclude<ENV_PARAMS_Value_Type, 'LX_USER_'>, string]>).filter(([k, v]) => {
+      if (!v) return false
+      envParams[k] = v
+      return true
     }),
-].map(([e, v]) => `${e}: ${v as string}`).join('\n')
-if (envLog) console.log(envLog)
+    ...Object.entries(process.env)
+      .filter(([k, v]) => {
+        if (k.startsWith('LX_USER_') && !!v) {
+          const name = k.replace('LX_USER_', '')
+          if (name) {
+            envUsers.push({
+              name,
+              password: v,
+            })
+            return true
+          }
+        }
+        return false
+      }),
+  ].map(([e, v]) => `${e}: ${v as string}`)
+  if (envLog.length) console.log(`Load env: \n  ${envLog.join('\n  ')}`)
+}
 
 const dataPath = envParams.DATA_PATH ?? path.join(__dirname, '../data')
 global.lx = {
@@ -44,6 +45,30 @@ global.lx = {
   dataPath,
   userPath: path.join(dataPath, 'users'),
   config: defaultConfig,
+}
+
+const mergeConfigFileEnv = (config: Partial<Record<ENV_PARAMS_Value_Type, string>>) => {
+  const envLog = []
+  for (const [k, v] of Object.entries(config).filter(([k]) => k.startsWith('env.'))) {
+    const envKey = k.replace('env.', '') as keyof typeof envParams
+    let value = String(v)
+    if (envParamKeys.includes(envKey)) {
+      if (envParams[envKey] == null) {
+        envLog.push(`${envKey}: ${value}`)
+        envParams[envKey] = value
+      }
+    } else if (envKey.startsWith('LX_USER_') && value) {
+      const name = k.replace('LX_USER_', '')
+      if (name) {
+        envUsers.push({
+          name,
+          password: value,
+        })
+        envLog.push(`${envKey}: ${value}`)
+      }
+    }
+  }
+  if (envLog.length) console.log(`Load config file env:\n  ${envLog.join('\n  ')}`)
 }
 
 const margeConfig = (p: string) => {
@@ -74,6 +99,8 @@ const margeConfig = (p: string) => {
     newConfig.users = users
   }
   global.lx.config = newConfig
+
+  mergeConfigFileEnv(config)
   return true
 }
 

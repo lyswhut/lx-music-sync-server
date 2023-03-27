@@ -15,4 +15,10 @@ module.exports = {
     //   'list.addMusicLocationType': 'top', // 可选，添加歌曲到我的列表时的方式 top | bottom，参考客户端的设置-列表设置-添加歌曲到我的列表时的方式
     // },
   ],
+
+
+  // 所有名称以 env. 开头的配置将解析成环境变量
+  // 'env.PORT': '9527',
+  // 'env.BIND_IP': '0.0.0.0',
+  // ...其他环境变量看Readme.md可用环境变量附录
 }
