@@ -6,6 +6,16 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Commit convention is based on [Conventional Commits](http://conventionalcommits.org).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [1.2.3](https://github.com/lyswhut/lx-music-sync-server/compare/v1.2.2...v1.2.3) - 2023-03-27
+
+### 优化
+
+- 添加用户空间管理延迟销毁
+
+### 修复
+
+- 修复在环境变量使用简写方式创建用户的数据解析问题（#6）
+
 ## [1.2.2](https://github.com/lyswhut/lx-music-sync-server/compare/v1.2.1...v1.2.2) - 2023-03-26
 
 ### 修复
