@@ -122,6 +122,24 @@ location /xxx { # 该规则用于代理路径下的ws请求
 
 注：上面的`xxx`是你想要代理的路径（可以多级），注意`$remote_addr`的转发名字与config.ts中的`proxy.header`对应，同时启用`proxy.enabled`，这用于校验相同IP多次使用错误连接码连接时的封禁
 
+## 升级新版本
+
+若更新日志无特别说明，注意保留**你修改过**的 `config.js`、`ecosystem.config.js` 或 `Dockerfile` 之类的配置文件，以及`data`、`logs`目录即可，其他的都可以删除后再将新版本的文件复制进去，以下是更新日志无特别说明的更新流程：
+
+使用在release下载的压缩包运行的服务：
+
+1. 删除项目目录下的 `server` 目录以及 `index.js`、`package.json`、`package-lock.json` 文件
+2. 将新版本的`server`目录 `index.js`、`package.json`、`package-lock.json` 文件复制进去
+3. 执行`npm install --omit=dev`
+4. 重启服务，执行 `pm2 restart 服务名称或ID` 重启服务（可以先执行`pm2 list`查看服务id或名称）
+
+使用源码编译运行的服务：
+
+1. 重新下载源码或使用git将代码更新到最新版本
+2. 执行 `npm install` 与 `npm run build`
+3. 重启你的服务
+
+使用docker：将代码更新到最新后，再打包镜像即可
 
 ## 附录
 
