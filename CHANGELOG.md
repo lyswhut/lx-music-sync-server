@@ -6,6 +6,12 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Commit convention is based on [Conventional Commits](http://conventionalcommits.org).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [1.3.0](https://github.com/lyswhut/lx-music-sync-server/compare/v1.2.3...v1.3.0) - 2023-03-27
+
+### 新增
+
+- 新增从配置文件读取环境变量的功能，在配置文件中，所有以`env.`开头的配置将视为环境变量配置，例如想要在配置文件中指定端口号，可以添加`'env.PORT': '9527'`
+
 ## [1.2.3](https://github.com/lyswhut/lx-music-sync-server/compare/v1.2.2...v1.2.3) - 2023-03-27
 
 ### 优化
