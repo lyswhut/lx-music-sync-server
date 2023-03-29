@@ -80,7 +80,7 @@ export const decryptMsg = (keyInfo: LX.Sync.KeyInfo, enMsg: string): string => {
 // }
 
 export const sendStatus = (status: LX.Sync.Status) => {
-  syncLog.info('status', status.status, status.devices.map(d => `${getUserName(d.clientId) ?? ''} ${d.deviceName}`))
+  syncLog.info('status', status.devices.map(d => `${getUserName(d.clientId) ?? ''} ${d.deviceName}`))
 }
 
 export const createClientKeyInfo = (deviceName: string, isMobile: boolean): LX.Sync.KeyInfo => {

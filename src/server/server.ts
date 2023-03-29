@@ -38,15 +38,17 @@ let status: LX.Sync.Status = {
 //   },
 // }
 
+const checkDuplicateClient = (newSocket: LX.Socket) => {
+  for (const client of [...wss!.clients]) {
+    if (client === newSocket || client.keyInfo.clientId != newSocket.keyInfo.clientId) continue
+    syncLog.info('duplicate client', client.userInfo.name, client.keyInfo.deviceName)
+    client.isReady = false
+    client.close(SYNC_CLOSE_CODE.normal)
+  }
+}
+
 const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
   const queryData = url.parse(request.url as string, true).query as Record<string, string>
-
-  socket.onClose(() => {
-    // console.log('disconnect', reason)
-    status.devices.splice(status.devices.findIndex(k => k.clientId == keyInfo?.clientId), 1)
-    sendStatus(status)
-  })
-
 
   //   // if (typeof socket.handshake.query.i != 'string') return socket.disconnect(true)
   const userName = getUserName(queryData.i)
@@ -70,6 +72,9 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
   //   // socket.lx_keyInfo = keyInfo
   socket.keyInfo = keyInfo
   socket.userInfo = user
+
+  checkDuplicateClient(socket)
+
   try {
     await syncList(wss as LX.SocketServer, socket)
   } catch (err) {
@@ -80,9 +85,13 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
   status.devices.push(keyInfo)
   // handleConnection(io, socket)
   sendStatus(status)
+  socket.onClose(() => {
+    status.devices.splice(status.devices.findIndex(k => k.clientId == keyInfo.clientId), 1)
+    sendStatus(status)
+  })
 
   // console.log('connection', keyInfo.deviceName)
-  accessLog.info('connection', keyInfo.deviceName)
+  accessLog.info('connection', user.name, keyInfo.deviceName)
   // console.log(socket.handshake.query)
   for (const module of Object.values(modules)) {
     module.registerListHandler(wss as LX.SocketServer, socket)
@@ -178,7 +187,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
       }
     })
     socket.addEventListener('close', () => {
-      accessLog.info('deconnection', socket.keyInfo.deviceName)
+      accessLog.info('deconnection', socket.userInfo.name, socket.keyInfo.deviceName)
       const err = new Error('closed')
       for (const handler of closeEvents) void handler(err)
       events = {}
@@ -228,15 +237,16 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
   })
 
   const interval = setInterval(() => {
-    wss?.clients.forEach(ws => {
-      if (ws.isAlive == false) {
-        ws.terminate()
+    wss?.clients.forEach(socket => {
+      if (socket.isAlive == false) {
+        syncLog.info('alive check false:', socket.userInfo.name, socket.keyInfo.deviceName)
+        socket.terminate()
         return
       }
 
-      ws.isAlive = false
-      ws.ping(noop)
-      if (ws.keyInfo.isMobile) ws.send('ping', noop)
+      socket.isAlive = false
+      socket.ping(noop)
+      if (socket.keyInfo.isMobile) socket.send('ping', noop)
     })
   }, 30000)
 
