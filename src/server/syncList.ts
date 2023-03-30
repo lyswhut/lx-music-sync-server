@@ -406,8 +406,9 @@ const handleMergeListDataFromSnapshot = async(socket: LX.Socket, snapshot: LX.Sy
 
   newListData.userList = newUserList
   const key = await setLocalList(socket, newListData)
-  await setRemotelList(socket, newListData, key)
+  const err = await setRemotelList(socket, newListData, key).catch(err => err)
   await overwriteRemoteListData(socket, newListData, key, [socket.keyInfo.clientId])
+  if (err) throw err
 }
 
 const syncList = async(socket: LX.Socket) => {
