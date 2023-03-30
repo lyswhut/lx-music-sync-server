@@ -143,6 +143,13 @@ location /xxx { # 该规则用于代理路径下的ws请求
 
 使用docker：将代码更新到最新后，再打包镜像即可
 
+## 从快照文件恢复数据
+
+1. 停止同步服务
+2. 修改`data/users/<用户名>/snapshotInfo.json`里面的`latest`为你那个备份文件key名（即`snapshot`文件夹下去掉`snapshot_`前缀后的名字）
+3. 删除同目录下`devices.json`文件内`clients`内的所有设备信息，删除后的内容类似：`{"userName":"<用户名>","clients":{}}`
+4. 启用同步服务，连接后勾选“完全覆盖”，选择“远程覆盖本地”
+
 ## 附录
 
 ### 可用的环境变量
