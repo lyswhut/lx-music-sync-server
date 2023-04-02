@@ -17,9 +17,17 @@
 Cent OS可以运行以下命令安装：
 
 ```bash
-yum install -y gcc-c++ make
+sudo yum install -y gcc-c++ make
 curl -sL https://rpm.nodesource.com/setup_16.x | sudo -E bash  -
 sudo yum install nodejs -y
+```
+
+基于 Debian、Ubuntu 发行版的系统使用以下命令安装：
+
+```bash
+sudo apt-get install -y build-essential
+curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - &&\
+sudo apt-get install -y nodejs
 ```
 
 安装完毕后输入以下命令正常情况下会显示Node.js的版本号
