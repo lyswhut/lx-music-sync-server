@@ -106,19 +106,10 @@ pm2 startup
 
 <!-- 看官网安装文档完成：<https://www.nginx.com/resources/wiki/start/topics/tutorials/install/> -->
 
-编辑Nginx配置文件，在server下添加 LX Sync 的代理规则：
+编辑Nginx配置文件，在server下添加 LX Sync 的代理规则以支持websocket：
 
 ```conf
-location /xxx/ { # 该规则用于代理路径下的http请求
-    proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.ts文件的 proxy.header 对应
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Host  $http_host;
-    proxy_set_header Connection "";
-    proxy_set_header X-Nginx-Proxy true;
-    proxy_pass http://127.0.0.1:9527;
-    proxy_redirect default;
-}
-location /xxx { # 该规则用于代理路径下的ws请求
+location / { # 该规则用于代理路径下的ws请求
     proxy_set_header X-Real-IP $remote_addr; # 该头部与config.ts文件的 proxy.header 对应
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header Host  $http_host;
@@ -130,7 +121,7 @@ location /xxx { # 该规则用于代理路径下的ws请求
 }
 ```
 
-注：上面的`xxx`是你想要代理的路径（可以多级），注意`$remote_addr`的转发名字与config.ts中的`proxy.header`对应，同时启用`proxy.enabled`，这用于校验相同IP多次使用错误连接码连接时的封禁
+注：注意`$remote_addr`的转发名字与config.ts中的`proxy.header`对应，同时启用`proxy.enabled`，这用于校验相同IP多次使用错误连接码连接时的封禁
 
 ## 升级新版本
 
