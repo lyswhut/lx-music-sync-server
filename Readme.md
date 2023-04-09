@@ -106,9 +106,18 @@ pm2 startup
 
 <!-- 看官网安装文档完成：<https://www.nginx.com/resources/wiki/start/topics/tutorials/install/> -->
 
-编辑Nginx配置文件，在server下添加 LX Sync 的代理规则以支持websocket：
+编辑Nginx配置文件，在server下添加以下 LX Sync 的代理规则以支持websocket：
 
 ```conf
+location /ah { # 该规则用于代理路径下的http请求
+    proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.ts文件的 proxy.header 对应
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host  $http_host;
+    proxy_set_header Connection "";
+    proxy_set_header X-Nginx-Proxy true;
+    proxy_pass http://127.0.0.1:9527;
+    proxy_redirect default;
+}
 location / { # 该规则用于代理路径下的ws请求
     proxy_set_header X-Real-IP $remote_addr; # 该头部与config.ts文件的 proxy.header 对应
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
