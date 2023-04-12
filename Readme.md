@@ -106,11 +106,54 @@ pm2 startup
 
 <!-- 看官网安装文档完成：<https://www.nginx.com/resources/wiki/start/topics/tutorials/install/> -->
 
-编辑Nginx配置文件，在server下添加 LX Sync 的代理规则：
+#### 说明
+
+代理需要配置两条规则：
+
+1. 代理链接 URL 根路径下的 WebSocket 请求到 LX Sync 服务
+2. 代理链接 URL 根路径下所有子路径的 HTTP 请求到 LX Sync 服务
+
+#### 配置
+
+编辑Nginx配置文件，在server下添加代理规则，如果你当前server块下只打算配置 LX Sync 服务，那么可以使用以下配置：
+
+<details>
+  <summary>点击展开</summary>
+
+```conf
+server {
+    # ...
+    location = / { # 该规则用于代理路径下的ws请求
+        proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的 proxy.header 对应
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host  $http_host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header X-Nginx-Proxy true;
+        proxy_pass http://127.0.0.1:9527;
+        proxy_redirect default;
+    }
+    location / { # 该规则用于代理路径下的http请求
+        proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host  $http_host;
+        proxy_set_header Connection "";
+        proxy_set_header X-Nginx-Proxy true;
+        proxy_pass http://127.0.0.1:9527;
+        proxy_redirect default;
+    }
+}
+```
+</details>
+
+如果你当前server块下存在其他服务，那么可以配置路径前缀转发：
+
+<details>
+  <summary>点击展开</summary>
 
 ```conf
 location /xxx/ { # 该规则用于代理路径下的http请求
-    proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.ts文件的 proxy.header 对应
+    proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.js文件的 proxy.header 对应
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header Host  $http_host;
     proxy_set_header Connection "";
@@ -119,7 +162,7 @@ location /xxx/ { # 该规则用于代理路径下的http请求
     proxy_redirect default;
 }
 location /xxx { # 该规则用于代理路径下的ws请求
-    proxy_set_header X-Real-IP $remote_addr; # 该头部与config.ts文件的 proxy.header 对应
+    proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的 proxy.header 对应
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header Host  $http_host;
     proxy_set_header Upgrade $http_upgrade;
@@ -130,7 +173,11 @@ location /xxx { # 该规则用于代理路径下的ws请求
 }
 ```
 
-注：上面的`xxx`是你想要代理的路径（可以多级），注意`$remote_addr`的转发名字与config.ts中的`proxy.header`对应，同时启用`proxy.enabled`，这用于校验相同IP多次使用错误连接码连接时的封禁
+</details>
+
+注：上面的`xxx`是你想要代理的路径前缀（可以多级）
+
+注意`$remote_addr`的转发名字与config.js中的`proxy.header`对应并同时启用`proxy.enabled`（或与环境变量的`PROXY_HEADER`对应），这用于校验相同IP多次使用错误连接码连接时的封禁
 
 ## 升级新版本
 
