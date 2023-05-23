@@ -1,7 +1,7 @@
-import LRU from 'lru-cache'
+import { LRUCache } from 'lru-cache'
 
 export default {
-  store: new LRU({
+  store: new LRUCache({
     max: 10000,
     ttl: 1000 * 60 * 60 * 24 * 2,
     // updateAgeOnGet: true,
