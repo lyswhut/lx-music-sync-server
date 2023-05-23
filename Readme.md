@@ -4,7 +4,7 @@
 
 本项目需要有一些服务器操作经验的人使用，若遇到问题欢迎反馈。
 
-**由于服务本身不提供https协议支持，若将服务部署在公网，请务必使用Nginx之类的服务做反向代理，实现客户端到服务器之间的https连接。**
+**由于服务本身不提供https协议支持，若将服务部署在公网，请务必使用Nginx之类的服务做反向代理，SSL证书需可信且有中间证书，实现客户端到服务器之间的https连接。**
 
 ## 环境要求
 
@@ -121,28 +121,25 @@ pm2 startup
   <summary>点击展开</summary>
 
 ```conf
-server {
-    # ...
-    location = / { # 该规则用于代理路径下的ws请求
-        proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的 proxy.header 对应
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host  $http_host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";
-        proxy_set_header X-Nginx-Proxy true;
-        proxy_pass http://127.0.0.1:9527;
-        proxy_redirect default;
+http {
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
     }
-    location / { # 该规则用于代理路径下的http请求
-        proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host  $http_host;
-        proxy_set_header Connection "";
-        proxy_set_header X-Nginx-Proxy true;
-        proxy_pass http://127.0.0.1:9527;
-        proxy_redirect default;
+
+    server {
+        ...
+
+        location / {
+            proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.js文件的 proxy.header 对应
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host  $http_host;
+            proxy_pass http://127.0.0.1:9527;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+        }
     }
-}
 ```
 </details>
 
@@ -152,25 +149,25 @@ server {
   <summary>点击展开</summary>
 
 ```conf
-location /xxx/ { # 该规则用于代理路径下的http请求
-    proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.js文件的 proxy.header 对应
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Host  $http_host;
-    proxy_set_header Connection "";
-    proxy_set_header X-Nginx-Proxy true;
-    proxy_pass http://127.0.0.1:9527;
-    proxy_redirect default;
-}
-location /xxx { # 该规则用于代理路径下的ws请求
-    proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的 proxy.header 对应
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Host  $http_host;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "Upgrade";
-    proxy_set_header X-Nginx-Proxy true;
-    proxy_pass http://127.0.0.1:9527;
-    proxy_redirect default;
-}
+http {
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
+    }
+
+    server {
+        ...
+
+        location /xxx/ {
+            proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.js文件的 proxy.header 对应
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host  $http_host;
+            proxy_pass http://127.0.0.1:9527;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+        }
+    }
 ```
 
 </details>
