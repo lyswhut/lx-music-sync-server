@@ -4,7 +4,7 @@
 
 本项目需要有一些服务器操作经验的人使用，若遇到问题欢迎反馈。
 
-**由于服务本身不提供https协议支持，若将服务部署在公网，请务必使用Nginx之类的服务做反向代理，SSL证书需可信且[证书链完整](https://stackoverflow.com/a/60020493)，实现客户端到服务器之间的https连接。**
+**由于服务本身不提供https协议支持，若将服务部署在公网，请务必使用Nginx之类的服务做反向代理（SSL证书需可信且[证书链完整](https://stackoverflow.com/a/60020493)），实现客户端到服务器之间的https连接。**
 
 ## 环境要求
 
@@ -233,3 +233,5 @@ http {
 ```bash
 docker build -t lx-music-sync-server .
 ```
+
+或者看issue中的解决方案：<https://github.com/lyswhut/lx-music-sync-server/issues/4>
