@@ -1,6 +1,6 @@
 {
-  // https://github.com/tsconfig/bases#node-18-tsconfigjson
-  "extends": "@tsconfig/node18/tsconfig.json",
+  // https://github.com/tsconfig/bases#node-16-tsconfigjson
+  "extends": "@tsconfig/node16/tsconfig.json",
 
   // Most ts-node options can be specified here using their programmatic names.
   "ts-node": {
