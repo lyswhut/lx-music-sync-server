@@ -170,11 +170,16 @@ const checkAndCreateDir = (path: string) => {
 const checkUserConfig = (users: LX.Config['users']) => {
   const userNames: string[] = []
   const passwords: string[] = []
+  const warnPasswords: string[] = []
   for (const user of users) {
     if (userNames.includes(user.name)) exit('User name duplicate: ' + user.name)
     if (passwords.includes(user.password)) exit('User password duplicate: ' + user.password)
+    if (Buffer.from(user.password).toString('hex').length > 16) warnPasswords.push(user.password)
     userNames.push(user.name)
     passwords.push(user.password)
+  }
+  if (warnPasswords.length) {
+    console.warn(`\n${warnPasswords.join('\n')}\n\n⚠️  The length of the above passwords in hex exceeds 16 characters, they will be truncated.\n⚠️  See details: https://github.com/lyswhut/lx-music-sync-server/issues/28`)
   }
 }
 
