@@ -27,6 +27,7 @@ module.exports = {
         '@typescript-eslint/no-non-null-assertion': 'off',
         '@typescript-eslint/restrict-template-expressions': [1, {
           allowBoolean: true,
+          allowAny: true,
         }],
         '@typescript-eslint/naming-convention': 'off',
         '@typescript-eslint/return-await': 'off',

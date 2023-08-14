@@ -6,7 +6,6 @@
 
 **由于服务本身不提供https协议支持，若将服务部署在公网，请务必使用Nginx之类的服务做反向代理（SSL证书需可信且[证书链完整](https://stackoverflow.com/a/60020493)），实现客户端到服务器之间的https连接。**
 
-⚠️当前版本存在**密码长度缺陷**问题，详情看：<https://github.com/lyswhut/lx-music-sync-server/issues/28>
 
 ## 环境要求
 
@@ -119,63 +118,34 @@ pm2 startup
 
 编辑Nginx配置文件，在server下添加代理规则，如果你当前server块下只打算配置 LX Sync 服务，那么可以使用以下配置：
 
-<details>
-  <summary>点击展开</summary>
-
 ```conf
 server {
     # ...
-    location = / { # 该规则用于代理路径下的ws请求
-        proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的 proxy.header 对应
+    location / {
+        proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.js文件的 proxy.header 对应
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host  $http_host;
+        proxy_pass http://127.0.0.1:9527;
+        proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";
-        proxy_set_header X-Nginx-Proxy true;
-        proxy_pass http://127.0.0.1:9527;
-        proxy_redirect default;
-    }
-    location / { # 该规则用于代理路径下的http请求
-        proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host  $http_host;
-        proxy_set_header Connection "";
-        proxy_set_header X-Nginx-Proxy true;
-        proxy_pass http://127.0.0.1:9527;
-        proxy_redirect default;
+        proxy_set_header Connection $connection_upgrade;
     }
 }
 ```
-</details>
 
 如果你当前server块下存在其他服务，那么可以配置路径前缀转发：
 
-<details>
-  <summary>点击展开</summary>
-
 ```conf
-location /xxx/ { # 该规则用于代理路径下的http请求
+location /xxx/ {
     proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.js文件的 proxy.header 对应
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header Host  $http_host;
-    proxy_set_header Connection "";
-    proxy_set_header X-Nginx-Proxy true;
     proxy_pass http://127.0.0.1:9527;
-    proxy_redirect default;
-}
-location /xxx { # 该规则用于代理路径下的ws请求
-    proxy_set_header X-Real-IP $remote_addr; # 该头部与config.js文件的 proxy.header 对应
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Host  $http_host;
+    proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "Upgrade";
-    proxy_set_header X-Nginx-Proxy true;
-    proxy_pass http://127.0.0.1:9527;
-    proxy_redirect default;
+    proxy_set_header Connection $connection_upgrade;
 }
 ```
-
-</details>
 
 注：上面的`xxx`是你想要代理的路径前缀（可以多级）
 

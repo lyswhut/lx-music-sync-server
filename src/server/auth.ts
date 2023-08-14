@@ -11,6 +11,7 @@ import querystring from 'node:querystring'
 import store from '@/utils/cache'
 import { getUserSpace } from '@/user'
 import { getUserName, setUserName } from '@/utils/data'
+import { toMD5 } from '@/utils'
 
 const getAvailableIP = (req: http.IncomingMessage) => {
   let ip = getIP(req)
@@ -43,7 +44,7 @@ const verifyByKey = (encryptMsg: string, userId: string) => {
 
 const verifyByCode = (encryptMsg: string, users: LX.Config['users']) => {
   for (const userInfo of users) {
-    let key = ''.padStart(16, Buffer.from(userInfo.password, 'utf8').toString('hex'))
+    let key = toMD5(userInfo.password).substring(0, 16)
     // const iv = Buffer.from(key.split('').reverse().join('')).toString('base64')
     key = Buffer.from(key).toString('base64')
     // console.log(req.headers.m, authCode, key)

@@ -20,7 +20,7 @@ export const LIST_IDS = {
 } as const
 
 export const SYNC_CODE = {
-  helloMsg: 'Hello~::^-^::~v3~',
+  helloMsg: 'Hello~::^-^::~v4~',
   idPrefix: 'OjppZDo6',
   authMsg: 'lx-music auth::',
   msgAuthFailed: 'Auth failed',

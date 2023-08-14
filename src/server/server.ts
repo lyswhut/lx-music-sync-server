@@ -1,14 +1,14 @@
 import http, { type IncomingMessage } from 'node:http'
 import url from 'node:url'
 import { WebSocketServer } from 'ws'
-import * as modules from './modules'
+import { modules, callObj } from './modules'
 import { authCode, authConnect } from './auth'
 import { getAddress, getServerId, sendStatus, decryptMsg, encryptMsg } from '@/utils/tools'
-import syncList from './syncList'
 import { accessLog, startupLog, syncLog } from '@/utils/log4js'
 import { SYNC_CLOSE_CODE, SYNC_CODE } from '@/constants'
 import { getUserName } from '@/utils/data'
 import { getUserSpace, releaseUserSpace } from '@/user'
+import { createMsg2call } from 'message2call'
 
 
 let status: LX.Sync.Status = {
@@ -37,6 +37,26 @@ let status: LX.Sync.Status = {
 //     this.timeout = null
 //   },
 // }
+
+const syncData = async(socket: LX.Socket) => {
+  for (const module of Object.values(modules)) {
+    await module.sync(socket)
+  }
+}
+
+
+const registerLocalSyncEvent = async(wss: LX.SocketServer) => {
+  for (const module of Object.values(modules)) {
+    module.registerEvent(wss)
+  }
+}
+
+// const unregisterLocalSyncEvent = () => {
+//   for (const module of Object.values(modules)) {
+//     module.unregisterEvent()
+//   }
+// }
+
 
 const checkDuplicateClient = (newSocket: LX.Socket) => {
   for (const client of [...wss!.clients]) {
@@ -76,7 +96,7 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
   checkDuplicateClient(socket)
 
   try {
-    await syncList(wss as LX.SocketServer, socket)
+    await syncData(socket)
   } catch (err) {
     // console.log(err)
     syncLog.warn(err)
@@ -93,19 +113,12 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
   // console.log('connection', keyInfo.deviceName)
   accessLog.info('connection', user.name, keyInfo.deviceName)
   // console.log(socket.handshake.query)
-  for (const module of Object.values(modules)) {
-    module.registerListHandler(wss as LX.SocketServer, socket)
-  }
 
   socket.isReady = true
 }
 
 const handleUnconnection = (userName: string) => {
   // console.log('unconnection')
-  // console.log(socket.handshake.query)
-  for (const module of Object.values(modules)) {
-    module.unregisterListHandler()
-  }
   releaseUserSpace(userName)
 }
 
@@ -167,52 +180,74 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
 
     // const events = new Map<keyof ActionsType, Array<(err: Error | null, data: LX.Sync.ActionSyncType[keyof LX.Sync.ActionSyncType]) => void>>()
     // const events = new Map<keyof LX.Sync.ActionSyncType, Array<(err: Error | null, data: LX.Sync.ActionSyncType[keyof LX.Sync.ActionSyncType]) => void>>()
-    let events: Partial<{ [K in keyof LX.Sync.ActionSyncType]: Array<(data: LX.Sync.ActionSyncType[K]) => void> }> = {}
+    // let events: Partial<{ [K in keyof LX.Sync.ActionSyncType]: Array<(data: LX.Sync.ActionSyncType[K]) => void> }> = {}
     let closeEvents: Array<(err: Error) => (void | Promise<void>)> = []
+    const msg2call = createMsg2call<LX.Sync.ClientActions>({
+      funcsObj: callObj,
+      timeout: 120 * 1000,
+      sendMessage(data) {
+        void encryptMsg(socket.keyInfo, JSON.stringify(data)).then((data) => {
+          // console.log('sendData', eventName)
+          socket.send(data)
+        }).catch(err => {
+          syncLog.error('encrypt message error:', err)
+          syncLog.error(err.message)
+          socket.close(SYNC_CLOSE_CODE.failed)
+        })
+      },
+      onCallBeforeParams(rawArgs) {
+        return [socket, ...rawArgs]
+      },
+      onError(error, path, groupName) {
+        const name = groupName ?? ''
+        syncLog.error(`sync call ${name} ${path.join('.')} error:`, error)
+        if (groupName == null) return
+        socket.close(SYNC_CLOSE_CODE.failed)
+      },
+    })
+    socket.remote = msg2call.remote
+    socket.remoteSyncList = msg2call.createSyncRemote('list')
     socket.addEventListener('message', ({ data }) => {
-      if (typeof data === 'string') {
-        let syncData: LX.Sync.ActionSync
+      if (typeof data != 'string') return
+      void decryptMsg(socket.keyInfo, data).then((data) => {
+        let syncData: any
         try {
-          syncData = JSON.parse(decryptMsg(socket.keyInfo, data))
+          syncData = JSON.parse(data)
         } catch (err) {
           syncLog.error('parse message error:', err)
           socket.close(SYNC_CLOSE_CODE.failed)
           return
         }
-        const handlers = events[syncData.action]
-        if (handlers) {
-          // @ts-expect-error
-          for (const handler of handlers) handler(syncData.data)
-        }
-      }
+        msg2call.onMessage(syncData)
+      }).catch(err => {
+        syncLog.error('decrypt message error:', err)
+        syncLog.error(err.message)
+        socket.close(SYNC_CLOSE_CODE.failed)
+      })
     })
     socket.addEventListener('close', () => {
+      if (!socket.isReady) {
+        const queryData = url.parse(request.url as string, true).query as Record<string, string>
+        accessLog.info('deconnection', queryData.i)
+        return
+      }
       accessLog.info('deconnection', socket.userInfo.name, socket.keyInfo.deviceName)
       const err = new Error('closed')
       for (const handler of closeEvents) void handler(err)
-      events = {}
+      // events = {}
+      msg2call.onDestroy()
       closeEvents = []
       if (!status.devices.map(d => getUserName(d.clientId)).filter(n => n == socket.userInfo.name).length) handleUnconnection(socket.userInfo.name)
     })
-    socket.onRemoteEvent = function(eventName, handler) {
-      let eventArr = events[eventName]
-      if (!eventArr) events[eventName] = eventArr = []
-      // let eventArr = events.get(eventName)
-      // if (!eventArr) events.set(eventName, eventArr = [])
-      eventArr.push(handler)
-
-      return () => {
-        eventArr!.splice(eventArr!.indexOf(handler), 1)
-      }
-    }
     socket.onClose = function(handler: typeof closeEvents[number]) {
       closeEvents.push(handler)
       return () => {
         closeEvents.splice(closeEvents.indexOf(handler), 1)
       }
     }
-    socket.sendData = function(eventName, data, callback) {
-      socket.send(encryptMsg(socket.keyInfo, JSON.stringify({ action: eventName, data })), callback)
+    socket.broadcast = function(handler) {
+      if (!wss) return
+      for (const client of wss.clients) handler(client)
     }
 
     void handleConnection(socket, request)
@@ -269,16 +304,26 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
     const bind = typeof addr == 'string' ? `pipe ${addr}` : `port ${addr.port}`
     startupLog.info(`Listening on ${ip} ${bind}`)
     resolve(null)
+    void registerLocalSyncEvent(wss as LX.SocketServer)
   })
 
   httpServer.listen(port, ip)
 })
 
-// const handleStopServer = async() => {
+// const handleStopServer = async() => new Promise<void>((resolve, reject) => {
 //   if (!wss) return
+//   for (const client of wss.clients) client.close(SYNC_CLOSE_CODE.normal)
+//   unregisterLocalSyncEvent()
 //   wss.close()
 //   wss = null
-// }
+//   httpServer.close((err) => {
+//     if (err) {
+//       reject(err)
+//       return
+//     }
+//     resolve()
+//   })
+// })
 
 // export const stopServer = async() => {
 //   codeTools.stop()

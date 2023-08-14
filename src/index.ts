@@ -170,16 +170,11 @@ const checkAndCreateDir = (path: string) => {
 const checkUserConfig = (users: LX.Config['users']) => {
   const userNames: string[] = []
   const passwords: string[] = []
-  const warnPasswords: string[] = []
   for (const user of users) {
     if (userNames.includes(user.name)) exit('User name duplicate: ' + user.name)
     if (passwords.includes(user.password)) exit('User password duplicate: ' + user.password)
-    if (Buffer.from(user.password).toString('hex').length > 16) warnPasswords.push(user.password)
     userNames.push(user.name)
     passwords.push(user.password)
-  }
-  if (warnPasswords.length) {
-    console.warn(`\n${warnPasswords.join('\n')}\n\n⚠️  The length of the above passwords in hex exceeds 16 characters, they will be truncated.\n⚠️  See details: https://github.com/lyswhut/lx-music-sync-server/issues/28`)
   }
 }
 
@@ -218,8 +213,10 @@ function normalizePort(val: string) {
 const port = normalizePort(envParams.PORT ?? '9527')
 const bindIP = envParams.BIND_IP ?? '127.0.0.1'
 
-void Promise.all([import('@/event'), import('@/server')]).then(async([{ createListEvent }, { startServer }]) => {
-  global.event_list = createListEvent()
-  return startServer(port, bindIP)
-})
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { createListEvent } = require('@/event')
+global.event_list = createListEvent()
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { startServer } = require('@/server')
+startServer(port, bindIP)
 
