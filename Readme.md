@@ -157,7 +157,7 @@ location /xxx/ {
 
 使用在release下载的压缩包运行的服务：
 
-1. 删除项目目录下的 `server` 目录以及 `index.js`、`package.json`、`package-lock.json` 文件
+1. 删除项目目录下的 `server`、`node_modules` 目录以及 `index.js`、`package.json`、`package-lock.json` 文件
 2. 将新版本的`server`目录 `index.js`、`package.json`、`package-lock.json` 文件复制进去
 3. 执行`npm install --omit=dev`
 4. 重启服务，执行 `pm2 restart 服务名称或ID` 重启服务（可以先执行`pm2 list`查看服务id或名称）
