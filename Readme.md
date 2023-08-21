@@ -111,8 +111,8 @@ pm2 startup
 
 代理需要配置两条规则：
 
-1. 代理链接 URL 根路径下的 WebSocket 请求到 LX Sync 服务
-2. 代理链接 URL 根路径下所有子路径的 HTTP 请求到 LX Sync 服务
+1. 代理链接 URL 根路径下所有子路径的 **WebSocket** 请求到 LX Sync 服务
+2. 代理链接 URL 根路径下所有子路径的 **HTTP** 请求到 LX Sync 服务
 
 #### 配置
 

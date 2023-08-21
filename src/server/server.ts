@@ -39,8 +39,13 @@ let status: LX.Sync.Status = {
 // }
 
 const syncData = async(socket: LX.Socket) => {
+  let disconnected = false
+  socket.onClose(() => {
+    disconnected = true
+  })
   for (const module of Object.values(modules)) {
     await module.sync(socket)
+    if (disconnected) throw new Error('disconnected')
   }
 }
 
@@ -226,18 +231,22 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
       })
     })
     socket.addEventListener('close', () => {
-      if (!socket.isReady) {
+      const err = new Error('closed')
+      try {
+        for (const handler of closeEvents) void handler(err)
+      } catch (err: any) {
+        syncLog.error(err?.message)
+      }
+      closeEvents = []
+      msg2call.onDestroy()
+      if (socket.isReady) {
+        accessLog.info('deconnection', socket.userInfo.name, socket.keyInfo.deviceName)
+        // events = {}
+        if (!status.devices.map(d => getUserName(d.clientId)).filter(n => n == socket.userInfo.name).length) handleUnconnection(socket.userInfo.name)
+      } else {
         const queryData = url.parse(request.url as string, true).query as Record<string, string>
         accessLog.info('deconnection', queryData.i)
-        return
       }
-      accessLog.info('deconnection', socket.userInfo.name, socket.keyInfo.deviceName)
-      const err = new Error('closed')
-      for (const handler of closeEvents) void handler(err)
-      // events = {}
-      msg2call.onDestroy()
-      closeEvents = []
-      if (!status.devices.map(d => getUserName(d.clientId)).filter(n => n == socket.userInfo.name).length) handleUnconnection(socket.userInfo.name)
     })
     socket.onClose = function(handler: typeof closeEvents[number]) {
       closeEvents.push(handler)
