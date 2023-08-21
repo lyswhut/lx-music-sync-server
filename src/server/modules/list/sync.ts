@@ -52,6 +52,8 @@ const overwriteRemoteListData = async(socket: LX.Socket, listData: LX.Sync.ListD
     tasks.push(client.remoteSyncList.onListSyncAction(action).then(() => {
       const userSpace = getUserSpace(socket.userInfo.name)
       userSpace.dataManage.updateDeviceSnapshotKey(socket.keyInfo, key)
+    }).catch(err => {
+      console.log(err.message)
     }))
   })
   if (!tasks.length) return
