@@ -13,19 +13,20 @@ declare namespace LX {
       // code: string
       devices: KeyInfo[]
     }
-
     interface KeyInfo {
       clientId: string
       key: string
       deviceName: string
-      lastSyncDate?: number
-      snapshotKey: string
+      lastConnectDate?: number
       isMobile: boolean
     }
 
+    interface ListInfo {
+      lastSyncDate?: number
+      snapshotKey: string
+    }
     type ListData = Omit<LX.List.ListDataFull, 'tempList'>
-
-    type Mode = 'merge_local_remote'
+    type ListSyncMode = 'merge_local_remote'
     | 'merge_remote_local'
     | 'overwrite_local_remote'
     | 'overwrite_remote_local'

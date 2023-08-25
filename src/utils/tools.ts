@@ -1,11 +1,11 @@
 import { networkInterfaces } from 'node:os'
-import { randomBytes, createCipheriv, createDecipheriv, publicEncrypt, privateDecrypt, constants } from 'node:crypto'
+import { createCipheriv, createDecipheriv, publicEncrypt, privateDecrypt, constants } from 'node:crypto'
 // import { join } from 'node:path'
 import zlib from 'node:zlib'
 import type http from 'node:http'
 // import getStore from '@/utils/store'
 import { syncLog } from './log4js'
-import { getUserName } from './data'
+import { getUserName } from '../user/data'
 // import { saveClientKeyInfo } from './data'
 
 export const getAddress = (): string[] => {
@@ -110,20 +110,3 @@ export const sendStatus = (status: LX.Sync.Status) => {
   syncLog.info('status', status.devices.map(d => `${getUserName(d.clientId) ?? ''} ${d.deviceName}`))
 }
 
-export const createClientKeyInfo = (deviceName: string, isMobile: boolean): LX.Sync.KeyInfo => {
-  const keyInfo: LX.Sync.KeyInfo = {
-    clientId: randomBytes(4 * 4).toString('base64'),
-    key: randomBytes(16).toString('base64'),
-    deviceName,
-    isMobile,
-    snapshotKey: '',
-    lastSyncDate: 0,
-  }
-  return keyInfo
-}
-
-
-export {
-  getServerId,
-  getUserConfig,
-} from './data'

@@ -1,5 +1,7 @@
-import { UserDataManage } from '@/utils/data'
-import { ListManage } from './modules/listManage'
+import { UserDataManage } from './data'
+import {
+  ListManage,
+} from '@/modules'
 
 export interface UserSpace {
   dataManage: UserDataManage
@@ -43,3 +45,6 @@ export const releaseUserSpace = (userName: string, force = false) => {
     users.delete(userName)
   } else seartDelayReleaseTimeout(userName)
 }
+
+
+export * from './data'

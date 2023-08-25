@@ -3,14 +3,12 @@ import { SYNC_CODE } from '@/constants'
 import {
   aesEncrypt,
   aesDecrypt,
-  createClientKeyInfo,
   rsaEncrypt,
   getIP,
 } from '@/utils/tools'
 import querystring from 'node:querystring'
 import store from '@/utils/cache'
-import { getUserSpace } from '@/user'
-import { getUserName, setUserName } from '@/utils/data'
+import { getUserSpace, getUserName, setUserName, createClientKeyInfo } from '@/user'
 import { toMD5 } from '@/utils'
 
 const getAvailableIP = (req: http.IncomingMessage) => {

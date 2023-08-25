@@ -9,7 +9,7 @@ import { getUserSpace } from '@/user'
 
 // type listAction = 'list:action'
 
-const handleListAction = async(userName: string, { action, data }: LX.Sync.ActionList) => {
+const handleListAction = async(userName: string, { action, data }: LX.List.ActionList) => {
   console.log('handleListAction', userName, action)
   switch (action) {
     case 'list_data_overwrite':
@@ -189,12 +189,12 @@ const handleListAction = async(userName: string, { action, data }: LX.Sync.Actio
 //   // }
 // }
 
-export const onListSyncAction = async(socket: LX.Socket, action: LX.Sync.ActionList) => {
+export const onListSyncAction = async(socket: LX.Socket, action: LX.List.ActionList) => {
   const userSpace = getUserSpace(socket.userInfo.name)
-  await handleListAction(socket.userInfo.name, action).then(key => {
+  await handleListAction(socket.userInfo.name, action).then(async key => {
     if (!key) return
     console.log(key)
-    userSpace.dataManage.updateDeviceSnapshotKey(socket.keyInfo, key)
+    await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
     const currentUserName = socket.userInfo.name
     const currentId = socket.keyInfo.clientId
     socket.broadcast((client) => {

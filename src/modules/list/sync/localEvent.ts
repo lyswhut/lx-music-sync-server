@@ -6,7 +6,7 @@
 let unregisterLocalListAction: (() => void) | null
 
 
-// const sendListAction = async(wss: LX.SocketServer, action: LX.Sync.ActionList) => {
+// const sendListAction = async(wss: LX.SocketServer, action: LX.List.ActionList) => {
 //   // console.log('sendListAction', action.action)
 //   const key = await getCurrentListInfoKey()
 //   for (const client of wss.clients) {

@@ -1,13 +1,12 @@
 import http, { type IncomingMessage } from 'node:http'
 import url from 'node:url'
 import { WebSocketServer } from 'ws'
-import { modules, callObj } from './modules'
+import { modules, callObj } from '@/modules'
 import { authCode, authConnect } from './auth'
-import { getAddress, getServerId, sendStatus, decryptMsg, encryptMsg } from '@/utils/tools'
+import { getAddress, sendStatus, decryptMsg, encryptMsg } from '@/utils/tools'
 import { accessLog, startupLog, syncLog } from '@/utils/log4js'
 import { SYNC_CLOSE_CODE, SYNC_CODE } from '@/constants'
-import { getUserName } from '@/utils/data'
-import { getUserSpace, releaseUserSpace } from '@/user'
+import { getUserSpace, releaseUserSpace, getUserName, getServerId } from '@/user'
 import { createMsg2call } from 'message2call'
 
 
@@ -92,7 +91,7 @@ const handleConnection = async(socket: LX.Socket, request: IncomingMessage) => {
     socket.close(SYNC_CLOSE_CODE.failed)
     return
   }
-  keyInfo.lastSyncDate = Date.now()
+  keyInfo.lastConnectDate = Date.now()
   userSpace.dataManage.saveClientKeyInfo(keyInfo)
   //   // socket.lx_keyInfo = keyInfo
   socket.keyInfo = keyInfo

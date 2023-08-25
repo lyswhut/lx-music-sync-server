@@ -1,55 +1,29 @@
-import { type UserDataManage } from '@/utils/data'
 import { arrPush, arrPushByPosition, arrUnshift } from '@/utils/common'
 import { LIST_IDS } from '@/constants'
-import { toMD5 } from '@/utils'
+import { type SnapshotDataManage } from './snapshotDataManage'
 
-export class ListManage {
-  userDataManage: UserDataManage
+export class ListDataManage {
+  snapshotDataManage: SnapshotDataManage
   userLists: LX.List.UserListInfo[] = []
   allMusicList = new Map<string, LX.Music.MusicInfo[]>()
 
-  constructor(dataManage: UserDataManage) {
-    this.userDataManage = dataManage
+  constructor(snapshotDataManage: SnapshotDataManage) {
+    this.snapshotDataManage = snapshotDataManage
 
-    let listData
-    const snapshotInfo = this.userDataManage.getSnapshotInfo()
-    if (snapshotInfo.latest) listData = this.userDataManage.getSnapshot(snapshotInfo.latest)
-    if (!listData) listData = { defaultList: [], loveList: [], userList: [] }
-    this.allMusicList.set(LIST_IDS.DEFAULT, listData.defaultList)
-    this.allMusicList.set(LIST_IDS.LOVE, listData.loveList)
-    this.userLists.push(...listData.userList.map(({ list, ...l }) => {
-      this.allMusicList.set(l.id, list)
-      return l
-    }))
+    let listData: LX.Sync.ListData | null
+    void this.snapshotDataManage.getSnapshotInfo().then(async(snapshotInfo) => {
+      if (snapshotInfo.latest) listData = await this.snapshotDataManage.getSnapshot(snapshotInfo.latest)
+      if (!listData) listData = { defaultList: [], loveList: [], userList: [] }
+      this.allMusicList.set(LIST_IDS.DEFAULT, listData.defaultList)
+      this.allMusicList.set(LIST_IDS.LOVE, listData.loveList)
+      this.userLists.push(...listData.userList.map(({ list, ...l }) => {
+        this.allMusicList.set(l.id, list)
+        return l
+      }))
+    })
   }
 
-  createSnapshot = () => {
-    const listData = JSON.stringify(this.getListData())
-    const md5 = toMD5(listData)
-    const snapshotInfo = this.userDataManage.getSnapshotInfo()
-    console.log(md5, snapshotInfo.latest)
-    if (snapshotInfo.latest == md5) return md5
-    if (snapshotInfo.list.includes(md5)) {
-      snapshotInfo.list.splice(snapshotInfo.list.indexOf(md5), 1)
-    } else this.userDataManage.saveSnapshot(md5, listData)
-    if (snapshotInfo.latest) snapshotInfo.list.unshift(snapshotInfo.latest)
-    snapshotInfo.latest = md5
-    snapshotInfo.time = Date.now()
-    this.userDataManage.saveSnapshotInfo(snapshotInfo)
-    return md5
-  }
-
-  getCurrentListInfoKey = () => {
-    const snapshotInfo = this.userDataManage.getSnapshotInfo()
-    if (snapshotInfo.latest) {
-      return snapshotInfo.latest
-    }
-    snapshotInfo.latest = toMD5(JSON.stringify(this.getListData()))
-    this.userDataManage.saveSnapshotInfo(snapshotInfo)
-    return snapshotInfo.latest
-  }
-
-  getListData = (): LX.Sync.ListData => {
+  getListData = async(): Promise<LX.Sync.ListData> => {
     return {
       defaultList: this.allMusicList.get(LIST_IDS.DEFAULT) ?? [],
       loveList: this.allMusicList.get(LIST_IDS.LOVE) ?? [],
@@ -58,12 +32,12 @@ export class ListManage {
   }
 
 
-  setUserLists = (lists: LX.List.UserListInfo[]) => {
+  private readonly setUserLists = (lists: LX.List.UserListInfo[]) => {
     this.userLists.splice(0, this.userLists.length, ...lists)
     return this.userLists
   }
 
-  setMusicList = (listId: string, musicList: LX.Music.MusicInfo[]): LX.Music.MusicInfo[] => {
+  private readonly setMusicList = (listId: string, musicList: LX.Music.MusicInfo[]): LX.Music.MusicInfo[] => {
     this.allMusicList.set(listId, musicList)
     return musicList
   }
@@ -142,7 +116,7 @@ export class ListManage {
   // }
 
 
-  listDataOverwrite = ({ defaultList, loveList, userList, tempList }: MakeOptional<LX.List.ListDataFull, 'tempList'>): string[] => {
+  listDataOverwrite = async({ defaultList, loveList, userList, tempList }: MakeOptional<LX.List.ListDataFull, 'tempList'>): Promise<string[]> => {
     const updatedListIds: string[] = []
     const newUserIds: string[] = []
     const newUserListInfos = userList.map(({ list, ...listInfo }) => {
@@ -174,7 +148,7 @@ export class ListManage {
     return updatedListIds
   }
 
-  userListCreate = ({ name, id, source, sourceListId, position, locationUpdateTime }: {
+  userListCreate = async({ name, id, source, sourceListId, position, locationUpdateTime }: {
     name: string
     id: string
     source?: LX.OnlineSource
@@ -193,7 +167,7 @@ export class ListManage {
     this.createUserList(newList, position)
   }
 
-  userListsRemove = (ids: string[]) => {
+  userListsRemove = async(ids: string[]) => {
     const changedIds = []
     for (const id of ids) {
       this.removeUserList(id)
@@ -207,13 +181,13 @@ export class ListManage {
     return changedIds
   }
 
-  userListsUpdate = (listInfos: LX.List.UserListInfo[]) => {
+  userListsUpdate = async(listInfos: LX.List.UserListInfo[]) => {
     for (const info of listInfos) {
       this.updateList(info)
     }
   }
 
-  userListsUpdatePosition = (position: number, ids: string[]) => {
+  userListsUpdatePosition = async(position: number, ids: string[]) => {
     const newUserLists = [...this.userLists]
 
     // console.log(position, ids)

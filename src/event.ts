@@ -1,16 +1,19 @@
 // import { Event as App, type Type as AppType } from './AppEvent'
-import { Event as List, type Type as ListType } from './ListEvent'
+import {
+  ListEvent,
+  type ListEventType,
+} from '@/modules'
 
 export type {
   // AppType,
-  ListType,
+  ListEventType,
 }
 
 // export const createAppEvent = (): AppType => {
 //   return new App()
 // }
 
-export const createListEvent = (): ListType => {
-  return new List()
+export const createModuleEvent = () => {
+  global.event_list = new ListEvent()
 }
 

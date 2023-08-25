@@ -4,7 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { initLogger } from '@/utils/log4js'
 import defaultConfig from './defaultConfig'
-import { ENV_PARAMS } from './constants'
+import { ENV_PARAMS, File } from './constants'
 import { checkAndCreateDirSync } from './utils'
 
 type ENV_PARAMS_Type = typeof ENV_PARAMS
@@ -43,7 +43,7 @@ const dataPath = envParams.DATA_PATH ?? path.join(__dirname, '../data')
 global.lx = {
   logPath: envParams.LOG_PATH ?? path.join(__dirname, '../logs'),
   dataPath,
-  userPath: path.join(dataPath, 'users'),
+  userPath: path.join(dataPath, File.userDir),
   config: defaultConfig,
 }
 
@@ -183,7 +183,7 @@ checkAndCreateDir(global.lx.dataPath)
 checkAndCreateDir(global.lx.userPath)
 checkUserConfig(global.lx.config.users)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { getUserDirname } = require('@/utils/data')
+const { getUserDirname } = require('@/user')
 for (const user of global.lx.config.users) {
   const dataPath = path.join(global.lx.userPath, getUserDirname(user.name))
   checkAndCreateDir(dataPath)
@@ -214,8 +214,12 @@ const port = normalizePort(envParams.PORT ?? '9527')
 const bindIP = envParams.BIND_IP ?? '127.0.0.1'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { createListEvent } = require('@/event')
-global.event_list = createListEvent()
+const { createModuleEvent } = require('@/event')
+createModuleEvent()
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('@/utils/migrate').default(global.lx.dataPath, global.lx.userPath)
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { startServer } = require('@/server')
 startServer(port, bindIP)
