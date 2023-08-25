@@ -17,6 +17,7 @@ interface ServerKeyInfo {
 export default (dataPath: string, userPath: string) => {
   const version = getVersion()
   if (version != 1) return
+  console.log('数据迁移：v1 -> v2')
   for (const dir of fs.readdirSync(userPath)) {
     const userDir = path.join(userPath, dir)
     const listDir = path.join(userDir, File.listDir)
