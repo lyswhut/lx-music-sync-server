@@ -1,9 +1,9 @@
 {
   "name": "lx-music-sync-server",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0-beta.1",
   "private": true,
   "scripts": {
-    "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
+    "build": "rimraf server && tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
     "start": "node ./index.js",
     "dev": "nodemon",
     "prd": "pm2 start ecosystem.config.js --env production",
@@ -35,16 +35,17 @@
     "ws": "^8.13.0"
   },
   "devDependencies": {
-    "@tsconfig/node16": "^16.1.0",
+    "@tsconfig/node16": "^16.1.1",
     "@types/ws": "8.5.4",
     "chalk": "^4.1.2",
     "changelog-parser": "^3.0.1",
-    "eslint-config-standard-with-typescript": "^37.0.0",
+    "eslint-config-standard-with-typescript": "^38.0.0",
     "nodemon": "^3.0.1",
+    "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
     "tsc-alias": "^1.8.7",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   },
   "nodemonConfig": {
     "ext": "js,ts",
