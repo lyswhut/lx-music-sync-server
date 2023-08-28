@@ -1,3 +1,4 @@
+// 这个文件导出的方法将暴露给客户端调用，第一个参数固定为当前 socket 对象
 // import { throttle } from '@common/utils/common'
 // import { sendSyncActionList } from '@main/modules/winMain'
 // import { SYNC_CLOSE_CODE } from '@/constants'
@@ -9,7 +10,7 @@ import { getUserSpace } from '@/user'
 
 // type listAction = 'list:action'
 
-const handleListAction = async(userName: string, { action, data }: LX.List.ActionList) => {
+const handleListAction = async(userName: string, { action, data }: LX.Sync.List.ActionList) => {
   console.log('handleListAction', userName, action)
   switch (action) {
     case 'list_data_overwrite':
@@ -153,7 +154,7 @@ const handleListAction = async(userName: string, { action, data }: LX.List.Actio
 //   }
 // }
 
-// export const sendListAction = async(action: LX.Sync.ActionList) => {
+// export const sendListAction = async(action: LX.Sync.List.ActionList) => {
 //   console.log('sendListAction', action.action)
 //   // io.sockets
 //   await broadcast('list:sync:action', action)
@@ -189,7 +190,8 @@ const handleListAction = async(userName: string, { action, data }: LX.List.Actio
 //   // }
 // }
 
-export const onListSyncAction = async(socket: LX.Socket, action: LX.List.ActionList) => {
+export const onListSyncAction = async(socket: LX.Socket, action: LX.Sync.List.ActionList) => {
+  if (!socket.moduleReadys?.list) return
   const userSpace = getUserSpace(socket.userInfo.name)
   await handleListAction(socket.userInfo.name, action).then(async key => {
     if (!key) return
@@ -198,8 +200,8 @@ export const onListSyncAction = async(socket: LX.Socket, action: LX.List.ActionL
     const currentUserName = socket.userInfo.name
     const currentId = socket.keyInfo.clientId
     socket.broadcast((client) => {
-      if (client.keyInfo.clientId == currentId || !client.isReady || client.userInfo.name != currentUserName) return
-      void client.remoteSyncList.onListSyncAction(action)
+      if (client.keyInfo.clientId == currentId || !client.moduleReadys?.list || client.userInfo.name != currentUserName) return
+      void client.remoteQueueList.onListSyncAction(action)
     })
   })
 }

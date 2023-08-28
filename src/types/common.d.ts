@@ -21,18 +21,10 @@ declare namespace LX {
       isMobile: boolean
     }
 
-    interface ListInfo {
-      lastSyncDate?: number
-      snapshotKey: string
+    type ServerType = 'desktop-app' | 'server'
+    interface EnabledFeatures {
+      list: boolean
     }
-    type ListData = Omit<LX.List.ListDataFull, 'tempList'>
-    type ListSyncMode = 'merge_local_remote'
-    | 'merge_remote_local'
-    | 'overwrite_local_remote'
-    | 'overwrite_remote_local'
-    | 'overwrite_local_remote_full'
-    | 'overwrite_remote_local_full'
-    // | 'none'
-    | 'cancel'
+    type SupportedFeatures = Partial<{ [k in keyof EnabledFeatures]: number }>
   }
 }

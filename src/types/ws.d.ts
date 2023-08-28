@@ -7,13 +7,16 @@ declare global {
       isReady: boolean
       keyInfo: LX.Sync.KeyInfo
       userInfo: LX.UserConfig
+      feature: LX.Sync.EnabledFeatures
+      moduleReadys: {
+        list: boolean
+      }
 
       onClose: (handler: (err: Error) => (void | Promise<void>)) => () => void
-
       broadcast: (handler: (client: LX.Socket) => void) => void
 
-      remote: LX.Sync.ClientActions
-      remoteSyncList: LX.Sync.ClientActions
+      remote: LX.Sync.ClientSyncActions
+      remoteQueueList: LX.Sync.ClientSyncListActions
     }
     type SocketServer = WS.Server<Socket>
   }

@@ -1,4 +1,4 @@
-import { SYNC_CLOSE_CODE } from '@/constants'
+// import { SYNC_CLOSE_CODE } from '@/constants'
 import { getUserSpace, getUserConfig } from '@/user'
 // import { LIST_IDS } from '@common/constants'
 
@@ -8,7 +8,7 @@ import { getUserSpace, getUserConfig } from '@/user'
 let syncingId: string | null = null
 const wait = async(time = 1000) => await new Promise((resolve, reject) => setTimeout(resolve, time))
 
-const patchListData = (listData: Partial<LX.Sync.ListData>): LX.Sync.ListData => {
+const patchListData = (listData: Partial<LX.Sync.List.ListData>): LX.Sync.List.ListData => {
   return Object.assign({
     defaultList: [],
     loveList: [],
@@ -16,39 +16,39 @@ const patchListData = (listData: Partial<LX.Sync.ListData>): LX.Sync.ListData =>
   }, listData)
 }
 
-const getRemoteListData = async(socket: LX.Socket): Promise<LX.Sync.ListData> => {
+const getRemoteListData = async(socket: LX.Socket): Promise<LX.Sync.List.ListData> => {
   console.log('getRemoteListData')
-  return patchListData(await socket.remoteSyncList.list_sync_get_list_data())
+  return patchListData(await socket.remoteQueueList.list_sync_get_list_data())
 }
 
 const getRemoteListMD5 = async(socket: LX.Socket): Promise<string> => {
-  return socket.remoteSyncList.list_sync_get_md5()
+  return socket.remoteQueueList.list_sync_get_md5()
 }
 
-const getLocalListData = async(socket: LX.Socket): Promise<LX.Sync.ListData> => {
+const getLocalListData = async(socket: LX.Socket): Promise<LX.Sync.List.ListData> => {
   return getUserSpace(socket.userInfo.name).listManage.getListData()
 }
-const getSyncMode = async(socket: LX.Socket): Promise<LX.Sync.ListSyncMode> => {
-  return socket.remoteSyncList.list_sync_get_sync_mode()
+const getSyncMode = async(socket: LX.Socket): Promise<LX.Sync.List.SyncMode> => {
+  return socket.remoteQueueList.list_sync_get_sync_mode()
 }
 
 const finishedSync = async(socket: LX.Socket) => {
-  await socket.remoteSyncList.list_sync_finished()
+  await socket.remoteQueueList.list_sync_finished()
 }
 
 
-const setLocalList = async(socket: LX.Socket, listData: LX.Sync.ListData) => {
+const setLocalList = async(socket: LX.Socket, listData: LX.Sync.List.ListData) => {
   await global.event_list.list_data_overwrite(socket.userInfo.name, listData, true)
   const userSpace = getUserSpace(socket.userInfo.name)
   return userSpace.listManage.createSnapshot()
 }
 
-const overwriteRemoteListData = async(socket: LX.Socket, listData: LX.Sync.ListData, key: string, excludeIds: string[] = []) => {
+const overwriteRemoteListData = async(socket: LX.Socket, listData: LX.Sync.List.ListData, key: string, excludeIds: string[] = []) => {
   const action = { action: 'list_data_overwrite', data: listData } as const
   const tasks: Array<Promise<void>> = []
   socket.broadcast((client) => {
-    if (excludeIds.includes(client.keyInfo.clientId) || client.userInfo.name != socket.userInfo.name || !client.isReady) return
-    tasks.push(client.remoteSyncList.onListSyncAction(action).then(async() => {
+    if (excludeIds.includes(client.keyInfo.clientId) || client.userInfo?.name != socket.userInfo.name || !client.moduleReadys?.list) return
+    tasks.push(client.remoteQueueList.onListSyncAction(action).then(async() => {
       const userSpace = getUserSpace(socket.userInfo.name)
       return userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
     }).catch(err => {
@@ -58,14 +58,14 @@ const overwriteRemoteListData = async(socket: LX.Socket, listData: LX.Sync.ListD
   if (!tasks.length) return
   await Promise.all(tasks)
 }
-const setRemotelList = async(socket: LX.Socket, listData: LX.Sync.ListData, key: string): Promise<void> => {
-  await socket.remoteSyncList.list_sync_set_list_data(listData)
+const setRemotelList = async(socket: LX.Socket, listData: LX.Sync.List.ListData, key: string): Promise<void> => {
+  await socket.remoteQueueList.list_sync_set_list_data(listData)
   const userSpace = getUserSpace(socket.userInfo.name)
   await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
 }
 
 type UserDataObj = Map<string, LX.List.UserListInfoFull>
-const createUserListDataObj = (listData: LX.Sync.ListData): UserDataObj => {
+const createUserListDataObj = (listData: LX.Sync.List.ListData): UserDataObj => {
   const userListDataObj: UserDataObj = new Map()
   for (const list of listData.userList) userListDataObj.set(list.id, list)
   return userListDataObj
@@ -110,9 +110,9 @@ const handleMergeList = (
   }
   return ids.map(id => map.get(id)) as LX.Music.MusicInfo[]
 }
-const mergeList = (socket: LX.Socket, sourceListData: LX.Sync.ListData, targetListData: LX.Sync.ListData): LX.Sync.ListData => {
+const mergeList = (socket: LX.Socket, sourceListData: LX.Sync.List.ListData, targetListData: LX.Sync.List.ListData): LX.Sync.List.ListData => {
   const addMusicLocationType = getUserConfig(socket.userInfo.name)['list.addMusicLocationType']
-  const newListData: LX.Sync.ListData = {
+  const newListData: LX.Sync.List.ListData = {
     defaultList: [],
     loveList: [],
     userList: [],
@@ -146,8 +146,8 @@ const mergeList = (socket: LX.Socket, sourceListData: LX.Sync.ListData, targetLi
 
   return newListData
 }
-const overwriteList = (sourceListData: LX.Sync.ListData, targetListData: LX.Sync.ListData): LX.Sync.ListData => {
-  const newListData: LX.Sync.ListData = {
+const overwriteList = (sourceListData: LX.Sync.List.ListData, targetListData: LX.Sync.List.ListData): LX.Sync.List.ListData => {
+  const newListData: LX.Sync.List.ListData = {
     defaultList: [],
     loveList: [],
     userList: [],
@@ -170,16 +170,13 @@ const overwriteList = (sourceListData: LX.Sync.ListData, targetListData: LX.Sync
   return newListData
 }
 
-const handleMergeListData = async(socket: LX.Socket): Promise<[LX.Sync.ListData, boolean, boolean]> => {
-  const mode: LX.Sync.ListSyncMode = await getSyncMode(socket)
+const handleMergeListData = async(socket: LX.Socket): Promise<[LX.Sync.List.ListData, boolean, boolean]> => {
+  const mode: LX.Sync.List.SyncMode = await getSyncMode(socket)
 
-  if (mode == 'cancel') {
-    socket.close(SYNC_CLOSE_CODE.normal)
-    throw new Error('cancel')
-  }
+  if (mode == 'cancel') throw new Error('cancel')
   const [remoteListData, localListData] = await Promise.all([getRemoteListData(socket), getLocalListData(socket)])
   console.log('handleMergeListData', 'remoteListData, localListData')
-  let listData: LX.Sync.ListData
+  let listData: LX.Sync.List.ListData
   let requiredUpdateLocalListData = true
   let requiredUpdateRemoteListData = true
   switch (mode) {
@@ -205,9 +202,7 @@ const handleMergeListData = async(socket: LX.Socket): Promise<[LX.Sync.ListData,
       break
     // case 'none': return null
     // case 'cancel':
-    default:
-      socket.close(SYNC_CLOSE_CODE.normal)
-      throw new Error('cancel')
+    default: throw new Error('cancel')
   }
   return [listData, requiredUpdateLocalListData, requiredUpdateRemoteListData]
 }
@@ -298,12 +293,12 @@ const checkListLatest = async(socket: LX.Socket) => {
   if (latest && userCurrentListInfoKey != currentListInfoKey) await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, currentListInfoKey)
   return latest
 }
-const handleMergeListDataFromSnapshot = async(socket: LX.Socket, snapshot: LX.Sync.ListData) => {
+const handleMergeListDataFromSnapshot = async(socket: LX.Socket, snapshot: LX.Sync.List.ListData) => {
   if (await checkListLatest(socket)) return
 
   const addMusicLocationType = getUserConfig(socket.userInfo.name)['list.addMusicLocationType']
   const [remoteListData, localListData] = await Promise.all([getRemoteListData(socket), getLocalListData(socket)])
-  const newListData: LX.Sync.ListData = {
+  const newListData: LX.Sync.List.ListData = {
     defaultList: [],
     loveList: [],
     userList: [],
@@ -412,7 +407,7 @@ const syncList = async(socket: LX.Socket) => {
 //   await fsPromises.unlink(filePath)
 // }
 
-export default async(socket: LX.Socket) => {
+export const sync = async(socket: LX.Socket) => {
   let disconnected = false
   socket.onClose(() => {
     disconnected = true
@@ -427,7 +422,8 @@ export default async(socket: LX.Socket) => {
 
   syncingId = socket.keyInfo.clientId
   await syncList(socket).then(async() => {
-    return finishedSync(socket)
+    await finishedSync(socket)
+    socket.moduleReadys.list = true
   }).finally(() => {
     syncingId = null
   })

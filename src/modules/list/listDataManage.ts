@@ -10,7 +10,7 @@ export class ListDataManage {
   constructor(snapshotDataManage: SnapshotDataManage) {
     this.snapshotDataManage = snapshotDataManage
 
-    let listData: LX.Sync.ListData | null
+    let listData: LX.Sync.List.ListData | null
     void this.snapshotDataManage.getSnapshotInfo().then(async(snapshotInfo) => {
       if (snapshotInfo.latest) listData = await this.snapshotDataManage.getSnapshot(snapshotInfo.latest)
       if (!listData) listData = { defaultList: [], loveList: [], userList: [] }
@@ -23,7 +23,7 @@ export class ListDataManage {
     })
   }
 
-  getListData = async(): Promise<LX.Sync.ListData> => {
+  getListData = async(): Promise<LX.Sync.List.ListData> => {
     return {
       defaultList: this.allMusicList.get(LIST_IDS.DEFAULT) ?? [],
       loveList: this.allMusicList.get(LIST_IDS.LOVE) ?? [],

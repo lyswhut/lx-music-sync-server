@@ -6,12 +6,12 @@
 let unregisterLocalListAction: (() => void) | null
 
 
-// const sendListAction = async(wss: LX.SocketServer, action: LX.List.ActionList) => {
+// const sendListAction = async(wss: LX.SocketServer, action: LX.Sync.List.ActionList) => {
 //   // console.log('sendListAction', action.action)
 //   const key = await getCurrentListInfoKey()
 //   for (const client of wss.clients) {
-//     if (!client.isReady) return
-//     void client.remoteSyncList.onListSyncAction(action).then(() => {
+//     if (!client.moduleReadys?.list) continue
+//     void client.remoteQueueList.onListSyncAction(action).then(() => {
 //       updateDeviceSnapshotKey(client.keyInfo, key)
 //     })
 //   }
@@ -23,6 +23,7 @@ export const registerEvent = (wss: LX.SocketServer) => {
   //   unregisterLocalListAction?.()
   //   unregisterLocalListAction = null
   // })
+  // unregisterEvent()
   // unregisterLocalListAction = registerListActionEvent((action) => {
   //   void sendListAction(wss, action)
   // })

@@ -68,7 +68,7 @@ for (const deviceInfo of fs.readdirSync(global.lx.userPath).map(dirname => {
     if (deviceInfo.userName) deviceUserMap.set(device.clientId, deviceInfo.userName)
   }
 }
-export const getUserName = (clientId: string): string | null => {
+export const getUserName = (clientId: string | null): string | null => {
   if (!clientId) return null
   return deviceUserMap.get(clientId) ?? null
 }
@@ -103,7 +103,7 @@ export class UserDataManage {
     this.saveDevicesInfoThrottle()
   }
 
-  getClientKeyInfo = (clientId?: string): LX.Sync.KeyInfo | null => {
+  getClientKeyInfo = (clientId: string | null): LX.Sync.KeyInfo | null => {
     if (!clientId) return null
     return this.devicesInfo.clients[clientId] ?? null
   }

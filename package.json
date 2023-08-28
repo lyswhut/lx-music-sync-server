@@ -1,6 +1,6 @@
 {
   "name": "lx-music-sync-server",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "private": true,
   "scripts": {
     "build": "rimraf server && tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
@@ -30,7 +30,7 @@
     "bufferutil": "^4.0.7",
     "log4js": "^6.9.1",
     "lru-cache": "^10.0.1",
-    "message2call": "^0.1.0",
+    "message2call": "^0.1.2",
     "utf-8-validate": "^6.0.3",
     "ws": "^8.13.0"
   },
@@ -39,7 +39,7 @@
     "@types/ws": "8.5.4",
     "chalk": "^4.1.2",
     "changelog-parser": "^3.0.1",
-    "eslint-config-standard-with-typescript": "^38.0.0",
+    "eslint-config-standard-with-typescript": "^39.0.0",
     "nodemon": "^3.0.1",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",

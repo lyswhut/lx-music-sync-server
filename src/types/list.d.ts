@@ -121,25 +121,5 @@ declare namespace LX {
     }
 
     type ListMusics = LX.Music.MusicInfo[]
-
-    interface SyncActionBase <A> {
-      action: A
-    }
-    interface SyncActionData<A, D> extends SyncActionBase<A> {
-      data: D
-    }
-    type SyncAction<A, D = undefined> = D extends undefined ? SyncActionBase<A> : SyncActionData<A, D>
-    type ActionList = SyncAction<'list_data_overwrite', ListActionDataOverwrite>
-    | SyncAction<'list_create', ListActionAdd>
-    | SyncAction<'list_remove', ListActionRemove>
-    | SyncAction<'list_update', ListActionUpdate>
-    | SyncAction<'list_update_position', ListActionUpdatePosition>
-    | SyncAction<'list_music_add', ListActionMusicAdd>
-    | SyncAction<'list_music_move', ListActionMusicMove>
-    | SyncAction<'list_music_remove', ListActionMusicRemove>
-    | SyncAction<'list_music_update', ListActionMusicUpdate>
-    | SyncAction<'list_music_update_position', ListActionMusicUpdatePosition>
-    | SyncAction<'list_music_overwrite', ListActionMusicOverwrite>
-    | SyncAction<'list_music_clear', ListActionMusicClear>
   }
 }
