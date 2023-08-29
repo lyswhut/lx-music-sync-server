@@ -46,6 +46,10 @@ export class ListManage {
     await this.snapshotDataManage.updateDeviceSnapshotKey(clientId, key)
   }
 
+  removeDevice = async(clientId: string) => {
+    this.snapshotDataManage.removeSnapshotInfo(clientId)
+  }
+
   getListData = async() => {
     return await this.listDataManage.getListData()
   }

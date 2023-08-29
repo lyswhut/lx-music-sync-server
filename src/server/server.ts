@@ -383,3 +383,19 @@ export const getStatus = (): LX.Sync.Status => status
 //   sendStatus(status)
 //   return status.code
 // }
+
+export const getDevices = async(userName: string) => {
+  const userSpace = getUserSpace(userName)
+  return userSpace.getDecices()
+}
+
+export const removeDevice = async(userName: string, clientId: string) => {
+  if (wss) {
+    for (const client of wss.clients) {
+      if (client.userInfo?.name == userName && client.keyInfo?.clientId == clientId) client.close(SYNC_CLOSE_CODE.normal)
+    }
+  }
+  const userSpace = getUserSpace(userName)
+  await userSpace.removeDevice(clientId)
+}
+

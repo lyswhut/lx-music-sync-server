@@ -97,6 +97,10 @@ export class UserDataManage {
   devicesInfo: DevicesInfo
   private readonly saveDevicesInfoThrottle: () => void
 
+  getAllClientKeyInfo = () => {
+    return Object.values(this.devicesInfo.clients).sort((a, b) => (b.lastConnectDate ?? 0) - (a.lastConnectDate ?? 0))
+  }
+
   saveClientKeyInfo = (keyInfo: LX.Sync.KeyInfo) => {
     if (this.devicesInfo.clients[keyInfo.clientId] == null && Object.keys(this.devicesInfo.clients).length > 101) throw new Error('max keys')
     this.devicesInfo.clients[keyInfo.clientId] = keyInfo
@@ -106,6 +110,12 @@ export class UserDataManage {
   getClientKeyInfo = (clientId: string | null): LX.Sync.KeyInfo | null => {
     if (!clientId) return null
     return this.devicesInfo.clients[clientId] ?? null
+  }
+
+  removeClientKeyInfo = async(clientId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete this.devicesInfo.clients[clientId]
+    this.saveDevicesInfoThrottle()
   }
 
   isIncluedsClient = (clientId: string) => {
