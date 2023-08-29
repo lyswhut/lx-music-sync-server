@@ -1,4 +1,5 @@
 // import { SYNC_CLOSE_CODE } from '@/constants'
+import { SYNC_CLOSE_CODE } from '@/constants'
 import { getUserSpace, getUserConfig } from '@/user'
 // import { LIST_IDS } from '@common/constants'
 
@@ -46,12 +47,15 @@ const setLocalList = async(socket: LX.Socket, listData: LX.Sync.List.ListData) =
 const overwriteRemoteListData = async(socket: LX.Socket, listData: LX.Sync.List.ListData, key: string, excludeIds: string[] = []) => {
   const action = { action: 'list_data_overwrite', data: listData } as const
   const tasks: Array<Promise<void>> = []
+  const userSpace = getUserSpace(socket.userInfo.name)
   socket.broadcast((client) => {
     if (excludeIds.includes(client.keyInfo.clientId) || client.userInfo?.name != socket.userInfo.name || !client.moduleReadys?.list) return
     tasks.push(client.remoteQueueList.onListSyncAction(action).then(async() => {
-      const userSpace = getUserSpace(socket.userInfo.name)
-      return userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
+      return userSpace.listManage.updateDeviceSnapshotKey(client.keyInfo.clientId, key)
     }).catch(err => {
+      // TODO send status
+      client.close(SYNC_CLOSE_CODE.failed)
+      // client.moduleReadys.list = false
       console.log(err.message)
     }))
   })
