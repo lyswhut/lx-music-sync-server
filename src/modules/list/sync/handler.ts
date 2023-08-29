@@ -50,7 +50,7 @@ const handleListAction = async(userName: string, { action, data }: LX.Sync.List.
       await global.event_list.list_music_clear(userName, data, true)
       break
     default:
-      return null
+      throw new Error('unknown list sync action')
   }
   const userSpace = getUserSpace(userName)
   let key = userSpace.listManage.createSnapshot()
@@ -192,16 +192,14 @@ const handleListAction = async(userName: string, { action, data }: LX.Sync.List.
 
 export const onListSyncAction = async(socket: LX.Socket, action: LX.Sync.List.ActionList) => {
   if (!socket.moduleReadys?.list) return
+  const key = await handleListAction(socket.userInfo.name, action)
+  console.log(key)
   const userSpace = getUserSpace(socket.userInfo.name)
-  await handleListAction(socket.userInfo.name, action).then(async key => {
-    if (!key) return
-    console.log(key)
-    await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
-    const currentUserName = socket.userInfo.name
-    const currentId = socket.keyInfo.clientId
-    socket.broadcast((client) => {
-      if (client.keyInfo.clientId == currentId || !client.moduleReadys?.list || client.userInfo.name != currentUserName) return
-      void client.remoteQueueList.onListSyncAction(action)
-    })
+  await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
+  const currentUserName = socket.userInfo.name
+  const currentId = socket.keyInfo.clientId
+  socket.broadcast((client) => {
+    if (client.keyInfo.clientId == currentId || !client.moduleReadys?.list || client.userInfo.name != currentUserName) return
+    void client.remoteQueueList.onListSyncAction(action)
   })
 }
