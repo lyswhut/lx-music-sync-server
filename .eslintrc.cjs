@@ -11,8 +11,8 @@ module.exports = {
         'space-before-function-paren': ['error', 'never'],
         'no-var': 'error',
         'no-fallthrough': 'off',
-        'prefer-promise-reject-errors': 'off',
         eqeqeq: 'off',
+        'require-atomic-updates': ['error', { allowProperties: true }],
         'no-multiple-empty-lines': [1, { max: 2 }],
         'comma-dangle': [2, 'always-multiline'],
         'standard/no-callback-literal': 'off',
@@ -53,6 +53,7 @@ module.exports = {
     'node_modules',
     '*.min.js',
     'dist',
-    '/config.js'
+    'publish',
+    '/*.js',
   ],
 }
