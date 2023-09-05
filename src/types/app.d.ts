@@ -1,5 +1,5 @@
 /* eslint-disable no-var */
-import { type ListEventType } from '@/event'
+import { type ListEventType, type DislikeEventType } from '@/event'
 
 declare global {
   interface Lx {
@@ -12,6 +12,7 @@ declare global {
   // var envParams: LX.EnvParams
   var lx: Lx
   var event_list: ListEventType
+  var event_dislike: DislikeEventType
 
 }
 

@@ -191,23 +191,27 @@ const handleListAction = async(userName: string, { action, data }: LX.Sync.List.
 //   // }
 // }
 
-export const onListSyncAction = async(socket: LX.Socket, action: LX.Sync.List.ActionList) => {
-  if (!socket.moduleReadys?.list) return
-  const key = await handleListAction(socket.userInfo.name, action)
-  console.log(key)
-  const userSpace = getUserSpace(socket.userInfo.name)
-  await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
-  const currentUserName = socket.userInfo.name
-  const currentId = socket.keyInfo.clientId
-  socket.broadcast((client) => {
-    if (client.keyInfo.clientId == currentId || !client.moduleReadys?.list || client.userInfo.name != currentUserName) return
-    void client.remoteQueueList.onListSyncAction(action).then(async() => {
-      return userSpace.listManage.updateDeviceSnapshotKey(client.keyInfo.clientId, key)
-    }).catch(err => {
+const handler: LX.Sync.ServerSyncHandlerListActions<LX.Socket> = {
+  async onListSyncAction(socket, action) {
+    if (!socket.moduleReadys?.list) return
+    const key = await handleListAction(socket.userInfo.name, action)
+    console.log(key)
+    const userSpace = getUserSpace(socket.userInfo.name)
+    await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
+    const currentUserName = socket.userInfo.name
+    const currentId = socket.keyInfo.clientId
+    socket.broadcast((client) => {
+      if (client.keyInfo.clientId == currentId || !client.moduleReadys?.list || client.userInfo.name != currentUserName) return
+      void client.remoteQueueList.onListSyncAction(action).then(async() => {
+        return userSpace.listManage.updateDeviceSnapshotKey(client.keyInfo.clientId, key)
+      }).catch(err => {
       // TODO send status
-      client.close(SYNC_CLOSE_CODE.failed)
-      // client.moduleReadys.list = false
-      console.log(err.message)
+        client.close(SYNC_CLOSE_CODE.failed)
+        // client.moduleReadys.list = false
+        console.log(err.message)
+      })
     })
-  })
+  },
 }
+
+export default handler

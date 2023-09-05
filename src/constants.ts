@@ -10,6 +10,10 @@ export const ENV_PARAMS = [
   'LX_USER_',
 ] as const
 
+export const SPLIT_CHAR = {
+  DISLIKE_NAME: '@',
+  DISLIKE_NAME_ALIAS: '#',
+} as const
 
 export const LIST_IDS = {
   DEFAULT: 'default',
@@ -58,8 +62,12 @@ export const File = {
   listDir: 'list',
   listSnapshotDir: 'snapshot',
   listSnapshotInfoJSON: 'snapshotInfo.json',
+  dislikeDir: 'dislike',
+  dislikeSnapshotDir: 'snapshot',
+  dislikeSnapshotInfoJSON: 'snapshotInfo.json',
 } as const
 
 export const FeaturesList = [
   'list',
+  'dislike',
 ] as const

@@ -10,6 +10,7 @@ declare global {
       feature: LX.Sync.EnabledFeatures
       moduleReadys: {
         list: boolean
+        dislike: boolean
       }
 
       onClose: (handler: (err: Error) => (void | Promise<void>)) => () => void
@@ -17,6 +18,7 @@ declare global {
 
       remote: LX.Sync.ClientSyncActions
       remoteQueueList: LX.Sync.ClientSyncListActions
+      remoteQueueDislike: LX.Sync.ClientSyncDislikeActions
     }
     type SocketServer = WS.Server<Socket>
   }

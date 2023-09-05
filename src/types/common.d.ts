@@ -24,6 +24,7 @@ declare namespace LX {
     type ServerType = 'desktop-app' | 'server'
     interface EnabledFeatures {
       list: boolean
+      dislike: boolean
     }
     type SupportedFeatures = Partial<{ [k in keyof EnabledFeatures]: number }>
   }
