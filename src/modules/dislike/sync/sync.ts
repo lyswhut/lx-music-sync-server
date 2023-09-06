@@ -178,7 +178,8 @@ const handleMergeListDataFromSnapshot = async(socket: LX.Socket, snapshot: LX.Di
 const syncDislike = async(socket: LX.Socket) => {
   // socket.data.snapshotFilePath = getSnapshotFilePath(socket.keyInfo)
   // console.log(socket.keyInfo)
-  if (!(socket.feature.dislike as LX.Sync.DislikeConfig).skipSnapshot) {
+  if (!socket.feature.dislike) throw new Error('dislike feature options not available')
+  if (!socket.feature.dislike.skipSnapshot) {
     const user = getUserSpace(socket.userInfo.name)
     const userCurrentDislikeInfoKey = await user.dislikeManage.getDeviceCurrentSnapshotKey(socket.keyInfo.clientId)
     if (userCurrentDislikeInfoKey) {
