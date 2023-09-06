@@ -1,5 +1,5 @@
 // import { SYNC_CLOSE_CODE } from '@/constants'
-import { SYNC_CLOSE_CODE } from '@/constants'
+import { SYNC_CLOSE_CODE, TRANS_MODE } from '@/constants'
 import { getUserSpace } from '@/user'
 import { filterRules } from '../utils'
 // import { LIST_IDS } from '@common/constants'
@@ -24,7 +24,8 @@ const getLocalListData = async(socket: LX.Socket): Promise<LX.Dislike.DislikeRul
   return getUserSpace(socket.userInfo.name).dislikeManage.getDislikeRules()
 }
 const getSyncMode = async(socket: LX.Socket): Promise<LX.Sync.List.SyncMode> => {
-  return socket.remoteQueueDislike.dislike_sync_get_sync_mode()
+  const mode = await socket.remoteQueueDislike.dislike_sync_get_sync_mode()
+  return TRANS_MODE[mode] ?? 'cancel'
 }
 
 const finishedSync = async(socket: LX.Socket) => {
