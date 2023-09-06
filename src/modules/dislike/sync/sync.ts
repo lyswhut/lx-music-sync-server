@@ -178,14 +178,16 @@ const handleMergeListDataFromSnapshot = async(socket: LX.Socket, snapshot: LX.Di
 const syncDislike = async(socket: LX.Socket) => {
   // socket.data.snapshotFilePath = getSnapshotFilePath(socket.keyInfo)
   // console.log(socket.keyInfo)
-  const user = getUserSpace(socket.userInfo.name)
-  const userCurrentDislikeInfoKey = await user.dislikeManage.getDeviceCurrentSnapshotKey(socket.keyInfo.clientId)
-  if (userCurrentDislikeInfoKey) {
-    const listData = await user.dislikeManage.snapshotDataManage.getSnapshot(userCurrentDislikeInfoKey)
-    if (listData) {
-      console.log('handleMergeDislikeDataFromSnapshot')
-      await handleMergeListDataFromSnapshot(socket, listData)
-      return
+  if (!(socket.feature.dislike as LX.Sync.DislikeConfig).skipSnapshot) {
+    const user = getUserSpace(socket.userInfo.name)
+    const userCurrentDislikeInfoKey = await user.dislikeManage.getDeviceCurrentSnapshotKey(socket.keyInfo.clientId)
+    if (userCurrentDislikeInfoKey) {
+      const listData = await user.dislikeManage.snapshotDataManage.getSnapshot(userCurrentDislikeInfoKey)
+      if (listData) {
+        console.log('handleMergeDislikeDataFromSnapshot')
+        await handleMergeListDataFromSnapshot(socket, listData)
+        return
+      }
     }
   }
   await handleSyncList(socket)

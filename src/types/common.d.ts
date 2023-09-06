@@ -21,10 +21,16 @@ declare namespace LX {
       isMobile: boolean
     }
 
+    interface ListConfig {
+      skipSnapshot: boolean
+    }
+    interface DislikeConfig {
+      skipSnapshot: boolean
+    }
     type ServerType = 'desktop-app' | 'server'
     interface EnabledFeatures {
-      list: boolean
-      dislike: boolean
+      list?: false | ListConfig
+      dislike?: false | DislikeConfig
     }
     type SupportedFeatures = Partial<{ [k in keyof EnabledFeatures]: number }>
   }
