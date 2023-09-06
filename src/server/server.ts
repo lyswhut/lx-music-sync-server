@@ -198,9 +198,9 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
         const userName = socket.userInfo?.name ?? ''
         const deviceName = socket.keyInfo?.deviceName ?? ''
         syncLog.error(`sync call ${userName} ${deviceName} ${name} ${path.join('.')} error:`, error)
-        if (groupName == null) return
-        // TODO
-        socket.close(SYNC_CLOSE_CODE.failed)
+        // if (groupName == null) return
+        // // TODO
+        // socket.close(SYNC_CLOSE_CODE.failed)
       },
     })
     socket.remote = msg2call.remote
