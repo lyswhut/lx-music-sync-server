@@ -1,6 +1,6 @@
 {
   "name": "lx-music-sync-server",
-  "version": "2.0.0-beta.4",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "build": "rimraf server && tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
@@ -32,7 +32,7 @@
     "lru-cache": "^10.0.1",
     "message2call": "^0.1.2",
     "utf-8-validate": "^6.0.3",
-    "ws": "^8.13.0"
+    "ws": "^8.14.1"
   },
   "devDependencies": {
     "@tsconfig/node16": "^16.1.1",
