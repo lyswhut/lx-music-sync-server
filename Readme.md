@@ -209,4 +209,6 @@ location /xxx/ {
 docker build -t lx-music-sync-server .
 ```
 
-或者看issue中的解决方案：<https://github.com/lyswhut/lx-music-sync-server/issues/4>
+或者使用已发布到 Docker Hub 的镜像：<https://hub.docker.com/r/lyswhut/lx-music-sync-server>
+
+也可以看issue中的解决方案：<https://github.com/lyswhut/lx-music-sync-server/issues/4>
