@@ -22,9 +22,11 @@ export default (dataPath: string, userPath: string) => {
     const userDir = path.join(userPath, dir)
     const listDir = path.join(userDir, File.listDir)
     checkAndCreateDirSync(listDir)
-    fs.renameSync(path.join(userDir, File.listSnapshotDir), path.join(listDir, File.listSnapshotDir))
+    const oldSnapshotDir = path.join(userDir, File.listSnapshotDir)
+    if (fs.existsSync(oldSnapshotDir)) fs.renameSync(oldSnapshotDir, path.join(listDir, File.listSnapshotDir))
 
     const oldSnapshotInfoPath = path.join(userDir, File.listSnapshotInfoJSON)
+    if (!fs.existsSync(oldSnapshotInfoPath)) continue
     const devicesInfoPath = path.join(userDir, File.userDevicesJSON)
     const snapshotInfo = JSON.parse(fs.readFileSync(oldSnapshotInfoPath).toString())
     const devicesInfo = JSON.parse(fs.readFileSync(devicesInfoPath).toString())
