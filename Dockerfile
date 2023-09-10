@@ -1,16 +1,29 @@
-FROM node:16-alpine AS builder
-WORKDIR /server
+FROM alpine AS builder
+WORKDIR /source-code
 COPY . .
-# RUN npm install
-RUN npm ci
-RUN npm run build
+
+RUN apk add --update \
+    g++ \
+    make \
+    py3-pip \
+    nodejs \
+    npm \
+  && npm ci && npm run build \
+  && rm -rf node_modules && npm ci --omit=dev \
+  && mkdir build-output \
+  && mv server node_modules config.js index.js package.json -t build-output
 
 
-FROM node:16-alpine AS final
+FROM alpine AS final
 WORKDIR /server
-COPY --from=builder ./server/server ./server
-COPY package.json package-lock.json config.js index.js ./
-RUN npm ci --omit=dev
+
+RUN apk add --update --no-cache nodejs
+
+COPY --from=builder ./source-code/build-output ./
+
+VOLUME /server/data
+ENV DATA_PATH '/server/data/data'
+ENV LOG_PATH '/server/data/logs'
 
 EXPOSE 9527
 ENV NODE_ENV 'production'
@@ -26,4 +39,4 @@ ENV BIND_IP '0.0.0.0'
 # ENV LOG_PATH '/server/logs'
 # ENV DATA_PATH '/server/data'
 
-CMD [ "npm", "start" ]
+CMD [ "node", "index.js" ]
