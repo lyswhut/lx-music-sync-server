@@ -6,6 +6,12 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Commit convention is based on [Conventional Commits](http://conventionalcommits.org).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.0.2](https://github.com/lyswhut/lx-music-sync-server/compare/v2.0.1...v2.0.2) - 2023-09-10
+
+### 修复
+
+- 修复同步数据字段顺序不一致导致两边列表数据相同时会出现MD5不匹配进而导致多余的同步流程问题
+
 ## [2.0.1](https://github.com/lyswhut/lx-music-sync-server/compare/v1.3.1...v2.0.1) - 2023-09-10
 
 ### 修复
