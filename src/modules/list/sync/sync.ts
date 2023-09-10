@@ -1,6 +1,7 @@
 // import { SYNC_CLOSE_CODE } from '@/constants'
 import { SYNC_CLOSE_CODE, TRANS_MODE } from '@/constants'
 import { getUserSpace, getUserConfig } from '@/user'
+import { buildUserListInfoFull } from '../utils'
 // import { LIST_IDS } from '@common/constants'
 
 // type ListInfoType = LX.List.UserListInfoFull | LX.List.MyDefaultListInfoFull | LX.List.MyLoveListInfoFull
@@ -294,6 +295,7 @@ const checkListLatest = async(socket: LX.Socket) => {
   const userSpace = getUserSpace(socket.userInfo.name)
   const userCurrentListInfoKey = await userSpace.listManage.getDeviceCurrentSnapshotKey(socket.keyInfo.clientId)
   const currentListInfoKey = await userSpace.listManage.getCurrentListInfoKey()
+  // console.log('checkListLatest', remoteListMD5, currentListInfoKey)
   const latest = remoteListMD5 == currentListInfoKey
   if (latest && userCurrentListInfoKey != currentListInfoKey) await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, currentListInfoKey)
   return latest
@@ -337,14 +339,14 @@ const handleMergeListDataFromSnapshot = async(socket: LX.Socket, snapshot: LX.Sy
     let newList: LX.List.UserListInfoFull
     if (remoteList) {
       const snapshotList = snapshotUserListData.get(list.id) ?? { name: null, source: null, sourceListId: null, list: [] }
-      newList = {
+      newList = buildUserListInfoFull({
         id: list.id,
-        locationUpdateTime: list.locationUpdateTime,
         name: selectData(snapshotList.name, list.name, remoteList.name),
         source: selectData(snapshotList.source, list.source, remoteList.source),
         sourceListId: selectData(snapshotList.sourceListId, list.sourceListId, remoteList.sourceListId),
+        locationUpdateTime: list.locationUpdateTime,
         list: mergeListDataFromSnapshot(list.list, remoteList.list, snapshotList.list, addMusicLocationType),
-      }
+      })
     } else {
       newList = { ...list }
     }
