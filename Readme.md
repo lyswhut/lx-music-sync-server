@@ -51,20 +51,20 @@ npm i -g pm2
 
 ### 安装依赖
 
-若安装依赖过程中出现因`utf-8-validate`包编译失败的错误，请尝试搜索相关错误解决，若实在无法解决，则可以编辑`package.json`文件删除`dependencies`下的`utf-8-validate`后，重新运行`npm install --omit=dev`或`npm install`即可
+若安装依赖过程中出现因`utf-8-validate`包编译失败的错误，请尝试搜索相关错误解决，若实在无法解决，则可以编辑`package.json`文件删除`dependencies`下的`utf-8-validate`后，重新运行`npm ci --omit=dev`或`npm ci`即可
 
 
 如果你是在release下载的压缩包，则解压后项目目录执行以下命令安装依赖：
 
 ```bash
-npm install --omit=dev
+npm ci --omit=dev
 ```
 
 
 如果你是直接下载的源码，则在本目录中运行以下命令
 
 ```bash
-npm install
+npm ci
 npm run build
 ```
 
@@ -159,13 +159,13 @@ location /xxx/ {
 
 1. 删除项目目录下的 `server`、`node_modules` 目录以及 `index.js`、`package.json`、`package-lock.json` 文件
 2. 将新版本的`server`目录 `index.js`、`package.json`、`package-lock.json` 文件复制进去
-3. 执行`npm install --omit=dev`
+3. 执行`npm ci --omit=dev`
 4. 重启服务，执行 `pm2 restart 服务名称或ID` 重启服务（可以先执行`pm2 list`查看服务id或名称）
 
 使用源码编译运行的服务：
 
 1. 重新下载源码或使用git将代码更新到最新版本
-2. 执行 `npm install` 与 `npm run build`
+2. 执行 `npm ci` 与 `npm run build`
 3. 重启你的服务
 
 使用docker：将代码更新到最新后，再打包镜像即可
@@ -173,8 +173,8 @@ location /xxx/ {
 ## 从快照文件恢复数据
 
 1. 停止同步服务
-2. 修改`data/users/<用户名>/snapshotInfo.json`里面的`latest`为你那个备份文件key名（即`snapshot`文件夹下去掉`snapshot_`前缀后的名字）
-3. 删除同目录下`devices.json`文件内`clients`内的所有设备信息，删除后的内容类似：`{"userName":"<用户名>","clients":{}}`
+2. 修改`data/users/<用户名>/list/snapshotInfo.json`里面的`latest`为你那个备份文件key名（即`snapshot`文件夹下去掉`snapshot_`前缀后的名字）
+3. 删除`snapshotInfo.json`文件内`clients`内的所有设备信息，删除后的内容类似：`{...其他内容,"clients":{}}`
 4. 启用同步服务，连接后勾选“完全覆盖”，选择“远程覆盖本地”
 
 ## 附录
