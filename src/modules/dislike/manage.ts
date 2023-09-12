@@ -30,12 +30,10 @@ export class DislikeManage {
 
   getCurrentListInfoKey = async() => {
     const snapshotInfo = await this.snapshotDataManage.getSnapshotInfo()
-    if (snapshotInfo.latest) {
-      return snapshotInfo.latest
-    }
-    snapshotInfo.latest = toMD5((await this.getDislikeRules()).trim())
-    this.snapshotDataManage.saveSnapshotInfo(snapshotInfo)
-    return snapshotInfo.latest
+    if (snapshotInfo.latest) return snapshotInfo.latest
+    // snapshotInfo.latest = toMD5((await this.getDislikeRules()).trim())
+    // this.snapshotDataManage.saveSnapshotInfo(snapshotInfo)
+    return this.createSnapshot()
   }
 
   getDeviceCurrentSnapshotKey = async(clientId: string) => {
