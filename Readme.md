@@ -119,6 +119,10 @@ pm2 startup
 编辑Nginx配置文件，在server下添加代理规则，如果你当前server块下只打算配置 LX Sync 服务，那么可以使用以下配置：
 
 ```conf
+map $http_upgrade $connection_upgrade{
+    default upgrade;
+    '' close;
+}
 server {
     # ...
     location / {
@@ -136,14 +140,21 @@ server {
 如果你当前server块下存在其他服务，那么可以配置路径前缀转发：
 
 ```conf
-location /xxx/ {
-    proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.js文件的 proxy.header 对应
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Host  $http_host;
-    proxy_pass http://127.0.0.1:9527;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection $connection_upgrade;
+map $http_upgrade $connection_upgrade{
+    default upgrade;
+    '' close;
+}
+server {
+    # ...
+    location /xxx/ {
+        proxy_set_header X-Real-IP $remote_addr;  # 该头部与config.js文件的 proxy.header 对应
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host  $http_host;
+        proxy_pass http://127.0.0.1:9527;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+    }
 }
 ```
 
