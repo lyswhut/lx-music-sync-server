@@ -6,6 +6,12 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Commit convention is based on [Conventional Commits](http://conventionalcommits.org).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.1.0](https://github.com/lyswhut/lx-music-sync-server/compare/v2.0.3...v2.1.0) - 2023-09-14
+
+### 新增
+
+- 添加armv7l docker 镜像构建
+
 ## [2.0.3](https://github.com/lyswhut/lx-music-sync-server/compare/v2.0.2...v2.0.3) - 2023-09-12
 
 ### 修复
