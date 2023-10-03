@@ -203,7 +203,7 @@ server {
 | `MAX_SNAPSHOT_NUM` | 公共最大备份快照数
 | `SERVER_NAME` | 同步服务名称
 | `LIST_ADD_MUSIC_LOCATION_TYPE` | 公共添加歌曲到我的列表时的方式可用值为 `top`、`bottom`
-| `LX_USER_` | 以`LX_USER_`开头的环境变量将被识别为用户配置，可用的配置语法为：<br />1. `LX_USER_user1='xxx'`<br />2. `LX_USER_user1='{"password":"xxx"}'`<br />其中`LX_USER_`会被去掉，剩下的`user1`为用户名，`xxx`为用户密码，<br />配置方式1为简写模式，只指定用户名及密码，其他配置使用公共配置，<br />配置方式2为JSON字符串格式，配置内容参考`config.js`，由于该方式在变量名指定了用户名，所以JSON里的用户名是可选的
+| `LX_USER_` | 以`LX_USER_`开头的环境变量将被识别为用户配置，可用的配置语法为：<br />1. `LX_USER_user1='xxx'`<br />2. `LX_USER_user1='{"password":"xxx"}'`<br />其中`LX_USER_`会被去掉，剩下的`user1`为用户名，`xxx`为用户密码（**链接码**），<br />配置方式1为简写模式，只指定用户名及密码（链接码），其他配置使用公共配置，<br />配置方式2为JSON字符串格式，配置内容参考`config.js`，由于该方式在变量名指定了用户名，所以JSON里的用户名是可选的
 
 ### PM2常用命令
 

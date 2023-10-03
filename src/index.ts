@@ -182,6 +182,10 @@ checkAndCreateDir(global.lx.logPath)
 checkAndCreateDir(global.lx.dataPath)
 checkAndCreateDir(global.lx.userPath)
 checkUserConfig(global.lx.config.users)
+
+console.log(`Users:
+${global.lx.config.users.map(user => `  ${user.name}: ${user.password}`).join('\n') || '  No User'}
+`)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { getUserDirname } = require('@/user')
 for (const user of global.lx.config.users) {
