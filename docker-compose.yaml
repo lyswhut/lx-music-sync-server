@@ -1,0 +1,14 @@
+version: '3'
+services:
+  lx-music:
+    container_name: lx-music
+    image: esme518/docker-lx-music-sync-server
+    ports:
+      - "6666:9527"
+    environment:
+      - BIND_IP=0.0.0.0
+      - LX_USER_user1=你的密码
+    restart: always
+
+volumes:
+  logvolume01: { }
