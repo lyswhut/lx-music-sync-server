@@ -6,6 +6,12 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Commit convention is based on [Conventional Commits](http://conventionalcommits.org).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.1.2](https://github.com/lyswhut/lx-music-sync-server/compare/v2.1.1...v2.1.2) - 2023-10-26
+
+### 修复
+
+- 修复绑定IP为IPv6时，连接用户时会导致服务报错的问题（#55）
+
 ## [2.1.1](https://github.com/lyswhut/lx-music-sync-server/compare/v2.1.0...v2.1.1) - 2023-10-03
 
 ### 优化
