@@ -311,7 +311,7 @@ const handleStartServer = async(port = 9527, ip = '127.0.0.1') => await new Prom
     void registerLocalSyncEvent(wss as LX.SocketServer)
   })
 
-  host = `http://${ip}:${port}`
+  host = `http://${ip.includes(':') ? `[${ip}]` : ip}:${port}`
   httpServer.listen(port, ip)
 })
 
