@@ -1,4 +1,6 @@
-FROM alpine AS builder
+FROM alpine AS base
+
+FROM base AS builder
 WORKDIR /source-code
 COPY . .
 
@@ -14,7 +16,7 @@ RUN apk add --update \
   && mv server node_modules config.js index.js package.json -t build-output
 
 
-FROM alpine AS final
+FROM base AS final
 WORKDIR /server
 
 RUN apk add --update --no-cache nodejs

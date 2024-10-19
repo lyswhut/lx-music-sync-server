@@ -183,6 +183,12 @@ server {
 
 ## 从快照文件恢复数据
 
+方式1：
+
+使用快照文件转换工具将其转换成列表备份文件后再导入备份： https://lyswhut.github.io/lx-msuic-sync-snapshot-transform/
+
+方式2：
+
 1. 停止同步服务
 2. 修改`data/users/<用户名>/list/snapshotInfo.json`里面的`latest`为你那个备份文件key名（即`snapshot`文件夹下去掉`snapshot_`前缀后的名字）
 3. 删除`snapshotInfo.json`文件内`clients`内的所有设备信息，删除后的内容类似：`{...其他内容,"clients":{}}`
